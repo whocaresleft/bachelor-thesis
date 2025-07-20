@@ -1,3 +1,97 @@
 % !TEX root = ../Thesis.tex
 
-\chapter{OS?}\label{cap:04}
+\chapter{Sistemi Operativi}\label{cap:04}
+
+Questo capitolo esplorerà le capacità offerte da Rust nel 
+contesto della programmazione di sistema. Verrà fornita una 
+prima panoramica sul linguaggio C, standard \textit{de facto}
+nella programmazione di sistema, in particolare evidenziando 
+quali caratteristiche lo rendono popolare in questo ambito.
+
+Successivamente Rust verrà confrontato con C, sulla base dei 
+concetti precedentemente elencati, per mostrare come, 
+\textit{nella teoria}, Rust possa presentare un'alternativa valida.
+
+Nel capitolo `\textit{<inserire nome>}'~\ref{cap:05} saranno 
+presentati progetti reali, che mostrano le potenzialità di Rust, 
+\textit{nella pratica}.
+
+% Introduzione sui sistemi operativi
+% Assembly, C, C++ e loro derivati 
+% Come mai? Cosa offrono? Vediamo in particolare il C
+
+\section{C: motivazioni e caratteristiche}
+C è un linguaggio di programmazione molto popolare nella programmazione
+di sistema. Il linguaggio si presenta molto vicino al codice macchina
+leggibile (o meglio, a un assembly), garantendo portabilità tra 
+architetture differenti.
+
+Si consideri, per esempio, quanto detto dal creatore del linguaggio:
+\begin{center}
+    \begin{minipage}{0.9\textwidth}
+        \vspace{0.5em}
+        \itshape "[C has] the power of the assembly language and the convenience of \ldots assembly language."
+
+        \hfill --- Dennis Ritchie, creatore del linguaggio C, "Dennis Ritchie: The Shoulders Steve Jobs Stood On", Wider, 13 Oct 2011
+        \vspace{0.4em}
+    \end{minipage}
+\end{center}
+
+\noindent La popolarità di C nella programmazione di sistema è dovuta a varie sue caratteristiche, quali 
+compilazione, assenza di dipendenze runtime, gestione diretta della
+ memoria, ottima manipolazione a livello di bit e somiglianza al 
+ codice macchina.
+\subsection*{Compilazione}
+C è un linguaggio compilato, il file eseguibile generato si presenta 
+molto più efficiente, sotto l'aspetto della velocità d'esecuzione, 
+rispetto a linguaggi interpretati. Questo lo rende preferibile in ambito 
+kernel, dove le prestazioni rappresentano un aspetto cruciale;
+
+\subsection*{Assenza di dipendenze runtime}
+C può essere impiegato per realizzare codice 
+`\textit{bare metal}', eseguibile direttamente sull'hardware, 
+senza un sistema operativo intermediario. 
+
+C non ha esigenze particolari 
+runtime, può funzionare anche senza un allocatore di memoria fornito dal 
+sistema operativo\footnote{Un programma che non usufruisce della memoria 
+dinamica non richiede un allocatore. Inoltre, nello sviluppo di un sistema 
+operativo, è il programmatore che deve fornire il proprio allocatore di 
+memoria, non ha un OS sottostante che può farlo al posto suo.}. L'unica 
+necessità è quella di un chiamante per la funzione \textit{main}\footnote{La chiamata in questo 
+contesto potrebbe essere fatta da un eseguibile assembly.}.
+
+\subsection*{Accesso diretto alla memoria}
+I puntatori C permettono di accedere direttamente a
+indirizzi di memoria arbitrari, garantendo operazioni di lettura e 
+scrittura dirette. 
+
+La gestione diretta della memoria è cruciale per lo sviluppo di un 
+sistema operativo, dove sarà necessario gestire: le tabelle delle pagine, 
+i dispositivi I/O mappati sulla memoria, i controllori DMA e altri;
+
+\subsection*{Manipolazione di bit}
+Molte interazioni con l'hardware si basano su operazioni bitwise, per esempio:
+\begin{itemize}
+    \item Operazioni di scrittura e lettura dei registri della CPU, come registri di flag di stato. Per esempio, in CPU x86 si trova il registro \textit{EFLAGS} che contiene una serie di bit di stato (\textit{overflow}, \textit{zero}, \textit{carry}, \textit{interrupt enable} e altri), il loro controllo di solito è fatto tramite l'applicazione di una maschera bitwise;
+    \item Gestione delle periferiche mappate sulla memoria, tramite operazioni di abilitazione e disabilitazione dei singoli pin (e.g.\  registri \textit{GPIO});
+    \item Controllo dei permessi sulle periferiche mappate sulla memoria. Per esempio, il \textit{Task State Segment} in architettura x86 associa a ogni porta un bit per segnarne lo stato: 0 per accesso consentito e 1 per accesso negato;
+\end{itemize}
+
+\subsection*{Somiglianza al codice macchina}
+C ha un'associazione quasi \textit{1-to-1} in codice macchina leggibile (i.e.\  assembly). 
+Questa trasparenza del linguaggio è importante nello sviluppo di 
+sistemi operativi: è possibile sapere cosa fa ogni istruzione. Non sono 
+presenti istruzioni o strutture dati complesse che potrebbero mascherare, o astrarre eccessivamente, 
+il comportamento di una o più istruzioni.\hfill
+\vspace{30pt}\\
+\noindent Uno dei punti di forza di C rappresenta anche una sua criticità. 
+L'accesso diretto e non controllato della memoria lo rende molto 
+performante, ma può facilitare la comparsa di problematiche come 
+\textit{unfreed memory}, \textit{access after free}, \textit{double free}, \textit{dangling pointers} e simili.
+
+Si considerino i seguenti esempi per comprendere le possibili conseguenze di queste criticità:
+\begin{itemize}
+    \item \textbf{Accesso a memoria altrui}. Un programma che esegue una lettura a un indirizzo di memoria senza previ controlli potrebbe inavvertitamente compromettere la privacy di un'altro utente o processo. Una scrittura invece potrebbe causare una corruzione della memoria utilizzata da un altro processo;
+    \item \textbf{Saturazione della memoria}. Un programma che cerca continuamente di allocare memoria, senza particolari controlli o criteri, potrebbe causare la saturazione della memoria di un sistema. Se lo \textit{swapping} è disponibile, questo causerebbe un continuo \textit{swap} delle pagine, costringendo il sistema a concentrarsi sulle operazioni di \textit{swapping} rispetto all'esecuzione dei programmi. Nel caso in cui lo \textit{swapping} non fosse disponibile questo causerebbe un crash di sistema.
+\end{itemize}

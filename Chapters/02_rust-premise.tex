@@ -2,38 +2,46 @@
 
 \chapter{Rust}\label{cap:02}
 
-Questo capitolo offre una panoramica sul linguaggio di programmazione Rust, concentrandosi sul contesto storico che ne ha determinato lo sviluppo e sulle motivazioni alla base della sua crescente popolarità.
+In questo capitolo verrà offerta una panoramica sul linguaggio di programmazione Rust, con particolare attenzione riguardo
+le motivazioni che ne hanno determinato lo sviluppo e alla base della sua crescente popolarità.
 
-Verranno inoltre introdotti alcuni concetti fondamentali, in particolare relativi alla gestione della memoria, che costituiranno il fulcro del capitolo successivo (cfr. Capitolo~\ref{cap:03}).
+Verranno inoltre introdotti alcuni concetti fondamentali riguardanti il modello di gestione della memoria di Rust, 
+che costituiranno il fulcro del capitolo tre: `\textit{Gestione della memoria in Rust}' (cfr. Capitolo~\ref{cap:03}).
 
 In chiusura, saranno presentati alcuni progetti attuali che evidenziano come Rust rappresenti una valida alternativa nel contesto della programmazione di sistemi.
 
 Le informazioni contenute in questo capitolo sono tratte principalmente dal seguente articolo\cite{rust-2023-interview}.
 \vspace{15pt}\\
-\noindent Rust è un linguaggio di programmazione che, negli ultimi anni, ha ottenuto un'ottima reputazione tanto tra gli sviluppatori quanto nel contesto industriale. Il suo principale punto di forza risiede nella capacità, considerata a lungo un ideale difficilmente realizzabile, di produrre codice che sia simultaneamente ad alte prestazioni e sicuro, in particolare sotto l'aspetto di gestione della memoria.
+\noindent Rust è un linguaggio di programmazione che, negli ultimi anni, ha ottenuto un'ottima reputazione  
+tanto tra gli sviluppatori quanto tra le aziende. Il suo principale punto di forza risiede nella 
+capacità, considerata a lungo un ideale solo teorico, di produrre codice che sia simultaneamente 
+ad alte prestazioni e sicuro, in particolare sotto l'aspetto di gestione della memoria.
 
 Che cosa rende Rust \textit{speciale}, rispetto ad altri linguaggi di programmazione? Principalmente, il suo approccio innovativo e alternativo alla gestione della memoria, che evita sia la necessità di gestione manuale da parte dello sviluppatore che la dipendenza da meccanismi di automatici, come \textit{garbage collection}.
 
 \section{Rust: contesto e motivazioni}
-Rust è un linguaggio di programmazione multiparadigma, spesso descritto come un linguaggio di basso livello che offre astrazioni di alto livello a costo quasi nullo.
-La caratteristica che lo distingue dalla maggior parte degli altri linguaggi è il suo approccio innovativo alla gestione della memoria dinamica. 
+Rust è spesso definito come un linguaggio di basso livello 
+che offre astrazioni di alto livello a costo quasi nullo.
+La caratteristica principale che lo distingue dalla maggior parte degli altri linguaggi è il meccanismo
+ di gestione della memoria dinamica. 
 
 Tradizionalmente esistono due approcci principali alla gestione della memoria:
 \begin{itemize}
-    \item \textbf{Gestione manuale}: tipica di linguaggi come C e C++, progettati per offrire al programmatore il massimo controllo. In questo modello, è il programmatore a decidere quando allocare e quando deallocare la memoria. Il codice prodotto è generalmente molto efficiente in termini di prestazioni, ma questo avviene a un costo: non si hanno garanzie riguardanti sicurezza o integrità della memoria. È facile incorrere in problemi come memoria non deallocata (\textit{unfreed memory}), accessi a memoria liberata (\textit{access after free}), \textit{dangling pointers}, \textit{double free} e simili;
-    \item \textbf{Garbage Collection (GC)}: adottata da linguaggi di livello più alto come Java, C\# e Python. In questo modello, la memoria viene gestita automaticamente da un componente runtime (il \textit{Garbage Collector}), che tiene traccia degli oggetti allocati e li libera quando non sono più referenziati. Questo approccio riduce drasticamente il rischio di errori legati alla gestione della memoria, ma introduce un costo in termini di prestazioni: l'intervento del \textit{GC} può generare rallentamenti o pause nell'esecuzione e richiede risorse computazionali aggiuntive per compiere la sua funzione.
+    \item \textbf{Gestione manuale}: tipica di linguaggi considerati di livello più basso, come C e C++, progettati per dare al programmatore il massimo controllo sulle risorse, compresa la memoria. Secondo questo approccio è il programmatore a decidere quando allocare e quando deallocare la memoria dinamica. Il codice risultante generalmente è molto performante in termini di velocità d'esecuzione, ma questo avviene a un costo: non si hanno garanzie sulla sicurezza e sull'integrità della memoria. L'accesso e la gestione diretta diretti della memoria possono portare problemi come \textit{unfreed memory}, \textit{access after free}, \textit{double free}, \textit{dangling pointers} e simili.
+    \item \textbf{Gestione automatica}: tipica di linguaggi di livello più alto come Java, Python e C\#, progettati per facilitare la gestione della memoria dinamica. È infatti gestita da un componente runtime, noto come \textit{Garbage Collector}: la memoria viene allocata implicitamente quando vengono creati oggetti, e liberata quando questi non sono più validi, in maniera trasparente agli occhi del programmatore. Il \textit{GC} tiene traccia degli oggetti allocati e libera la loro memoria quando questi non sono più referenziati. Il codice prodotto generalmente è libero dalla maggior parte degli errori legati alla memoria, ma questo avviene a un costo: il codice relativo al \textit{GC} viene incluso insieme al codice dell'applicazione, generando un file eseguibile di dimensioni maggiori; inoltre, il \textit{GC} richiede risorse computazionali aggiuntive per compiere la sua funzione, eventualmente rallentando, se non bloccando momentaneamente, l'esecuzione dell'applicazione.
 \end{itemize}
-Durante lo sviluppo di un'applicazione, la scelta dell'approccio dipende dalle specifiche esigenze.
-In contesti come lo sviluppo di sistemi operativi o software embedded, dove le prestazioni e il controllo fine della memoria sono fondamentali, l'approccio
-manuale spesso è l'unica opzione praticabile, rendendo linguaggi come C, C++ o loro derivati lo standard \textit{de facto}, anche a discapito della sicurezza. \hfill
+Non esiste un approccio `oggettivamente' corretto o migliore rispetto l'altro: durante lo sviluppo di un'applicazione 
+la scelta sull'approccio utilizzato spesso ricade sulle specifiche esigenze.
+In applicazioni di basso livello, quali lo sviluppo di sistemi operativi, dove le prestazioni sono fondamentali, la scelta si riduce, 
+nella pratica, solamente all'approccio manuale, rendendo linguaggi come C e i suoi derivati lo standard.\hfill
 \vspace{15pt}\\
-Il creatore di Rust si è posto un obiettivo ambizioso: progettare un linguaggio che eliminasse il compromesso tra prestazioni e sicurezza nella gestione della memoria, fornendo un'alternativa pratica e affidabile alle soluzioni tradizionali.
+Il creatore di Rust si pose come obiettivo sviluppare un linguaggio che eliminasse il compromesso tra prestazioni e sicurezza della memoria, fornendo un'alternativa agli approcci tradizionali.
 
 \section{Origine e primo sviluppo}
-Rust nasce nel 2006 come progetto personale di Graydon Hoare, uno sviluppatore presso l'azienda Mozilla.
-L'idea iniziale nacque dalla frustrazione legata ai frequenti malfunzionamenti di sistemi software critici, spesso dovuti a problematiche di gestione della memoria nei linguaggi tradizionali come C e C++.\footnote{Secondo un diffuso aneddoto, Hoare rimase particolarmente frustrato dai
-ricorrenti crash del software dell'ascensore del palazzo in cui risiedeva (al ventunesimo piano). Il software dell'ascensore era scritto presumibilmente 
-in C, e da lì maturò il desiderio di progettare un'alternativa.}
+Rust nacque inizialmente come progetto personale di Graydon Hoare, sviluppatore presso l'azienda Mozilla, nel 2006.
+Il progetto nacque in seguito alla frustrazione di Hoare per i frequenti malfunzionamenti di software critici, spesso dovuti 
+a problematiche di gestione della memoria\footnote{Secondo quanto riportato nell'articolo\cite{rust-2023-interview}, 
+la frustrazione di Hoare era dovuta ai continui crash del software (presumibilmente scritto in C) dell'ascensore del palazzo in cui risiedeva, al ventunesimo piano}.
 
 L'obiettivo del progetto era molto ambizioso: sviluppare un linguaggio che consentisse di scrivere codice 
 che fosse contemporaneamente \textit{veloce e sicuro}, principalmente sotto l'aspetto di gestione della memoria.

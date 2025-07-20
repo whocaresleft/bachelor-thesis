@@ -4,14 +4,14 @@
 
 In questo capitolo viene esaminato l'approccio implementato da Rust per gestire la memoria dinamica. In particolare, verranno approfonditi concetti chiave come Ownership, Borrowing e Lifetime, illustrandone il funzionamento. L'obiettivo è evidenziare come Rust possa garantire la sicurezza della memoria senza sacrificare le prestazioni.
 
-Le informazioni presentate in questo capitolo sono tratte principalmente dalla documentazione ufficiale di Rust\cite{rust-lang}. \hfill
+Le informazioni presentate in questo capitolo sono tratte principalmente dalla documentazione ufficiale di Rust\cite{rust-book}. \hfill
 \vspace{15pt}
-\noindent L'approccio implementato da Rust per gestire la memoria dinamica è noto come "modello di ownership" (\textit{Ownership Model}). Il modello si fonda sui concetti di \textit{ownership}, \textit{borrowing} e \textit{lifetime}, i quali stabiliscono regole sulla gestione della memoria che devono essere rispettate affinché il codice sia compilabile. Il rispetto di tali regole costituisce un prerequisito per la compilazione. Il compilatore controlla che ogni vincolo sia soddisfatto e procede alla compilazione solo in caso positivo. Il modello garantisce un uso corretto e sicuro della memoria già a tempo di compilazione, evitando l'introduzione di overhead durante l'esecuzione\footnote{È opportuno precisare che un minimo overhead viene comunque introdotto, sotto forma di invocazione  automatica di una funzione dedicata alla deallocazione}.
+\noindent L'approccio implementato da Rust per gestire la memoria dinamica è noto come `modello di ownership' (\textit{Ownership Model}). Il modello si fonda sui concetti di \textit{ownership}, \textit{borrowing} e \textit{lifetime}, i quali stabiliscono regole sulla gestione della memoria che devono essere rispettate affinché il codice sia compilabile. Il rispetto di tali regole costituisce un prerequisito per la compilazione. Il compilatore controlla che ogni vincolo sia soddisfatto e procede alla compilazione solo in caso positivo. Il modello garantisce un uso corretto e sicuro della memoria già a tempo di compilazione, evitando l'introduzione di overhead durante l'esecuzione\footnote{È opportuno precisare che un minimo overhead viene comunque introdotto, sotto forma di invocazione  automatica di una funzione dedicata alla deallocazione}.
 \section{Ownership}
 Il primo concetto alla base del modello di Ownership di Rust è l'\textit{ownership}\footnote{Sebbene innovativo, questo concetto non è unico di Rust. Quest'ultimo ha preso spunto da un pattern ampiamente utilizzato in C++: \textit{RAII} (Resource Allocation Is Initialization), il quale prevede la deallocazione delle risorse alla fine della lifetime di una variabile.} stessa, la quale definisce vincoli sui legami tra variabili e valori. Rust introduce il concetto di \textit{proprietario}: ogni valore ha un proprietario, ovvero la variabile che lo possiede in un determinato istante.
 
 Si consideri, come esempio, la seguente assegnazione: \texttt{a = 5}.
-Nella maggior parte dei linguaggi di programmazione, l'istruzione verrebbe interpretata come "\textit{a vale 5}". In Rust il significato è diverso: "\textit{a possiede il valore 5}" o "\textit{a è il proprietario di 5}". \\
+Nella maggior parte dei linguaggi di programmazione, l'istruzione verrebbe interpretata come `\textit{a vale 5}'. In Rust il significato è diverso: `\textit{a possiede il valore 5}' o `\textit{a è il proprietario di 5}'. \\
 \indent Stabilire i proprietari è fondamentale per implementare un meccanismo di deallocazione della memoria deterministico e prevedibile: chi libera la memoria relativa a un determinato valore? Il suo proprietario. \break \break
 \noindent Le regole di \textit{ownership}, quindi, stabiliscono i vincoli sui legami tra valori e proprietari. Esse sono tre:
 \begin{itemize}
@@ -259,4 +259,7 @@ In contesti dove le \textit{lifetime} non vengono esplicitamente annotate, il co
     \item Se c'è una sola reference tra i parametri di ingresso, la sua \textit{lifetime} viene assegnata automaticamente al valore di ritorno (se anch'esso è una reference);
     \item Se ci sono più reference in ingresso, ma una di esse è \texttt{\&self} o \texttt{\&mut self}, allora la \textit{lifetime} di \texttt{self} viene propagata alle eventuali reference in uscita.
 \end{itemize}
-Infine, esiste una \textit{lifetime} speciale, \texttt{'static}, il quale indica una reference valida per l'intera durata del programma. Questa \textit{lifetime} tipicamente viene utilizzata per dati costanti o risorse allocate a tempo indeterminato.
+Infine, esiste una \textit{lifetime} speciale, \texttt{'static}, il quale indica una reference valida per l'intera durata del programma. Questa \textit{lifetime} tipicamente viene utilizzata per dati costanti o risorse allocate a tempo indeterminato.\hfill
+\vspace{25pt}\\
+\noindent Nel prossimo capitolo~\ref{cap:04} verrà mostrato come, grazie a questi concetti, Rust rappresenti un'alternativa valida
+per la programmazione di sistema, riuscendo a competere con linguaggi come C e C++.
