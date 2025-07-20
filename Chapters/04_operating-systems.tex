@@ -97,23 +97,25 @@ commettere errori potenzialmente gravi come:
 \end{itemize}
 
 \section{Rust contro C}
-Nonostante Rust offra varie astrazioni di alto livello\footnote{Rust offre delle astrazioni di alto livello definite \textit{zero cost}: feature quali \textit{iteratori}, \textit{generics}, \textit{smart pointers} e meccanismi di \textit{async/await} che vengono compilate in codice dalle prestazioni equivalenti alla controparte \textit{low-level} scritta a mano.}, è progettato come un linguaggio di basso livello, 
-capace di essere impiegato nella programmazione di sistema.
+Nonostante Rust offra numerose astrazioni di alto livello\footnote{Rust offre delle astrazioni di alto livello definite \textit{zero cost}: feature quali \textit{iteratori}, \textit{generics}, \textit{smart pointers} e meccanismi di \textit{async/await} che vengono compilate in codice dalle prestazioni equivalenti alla controparte \textit{low-level} scritta a mano.}, è progettato come un linguaggio di basso livello, 
+adatto alla programmazione di sistema.
 Per comprendere le capacità di Rust nella programmazione di basso livello, verrà confrontato con il linguaggio C, sulla 
 base delle caratteristiche che lo rendono favorevole nella programmazione di sistema.
+
+La maggior parte delle informazioni riportate nella sezione è stata ricavata dalla documentazione ufficiale di Rust\cite{rust-book}.
 \begin{itemize}
     \item \textbf{Compilazione} (Come C): Anche Rust è un linguaggio compilato. Il compilatore genera, in base alla piattaforma, un file direttamente eseguibile;
-    \item \textbf{Dipendenze runtime} (Come C): Rust, per configurazione predefinita, ha dipendenze runtime minime (principalmente un allocatore di memoria). Tuttavia, tramite la direttiva \texttt{\#![no\_std]} è possibile rimuovere la dipendenza dalla libreria standard: in questa configurazione, l'unica necessità è quella di un bootstrap che invochi la funzione \texttt{\_start} per fare iniziare l'esecuzione;
+    \item \textbf{Dipendenze runtime} (Come C): Rust, per configurazione predefinita, ha dipendenze runtime minime (principalmente un allocatore di memoria). Tuttavia, come riportato in \textit{The Embedded Rust Book}\cite{rust-book-embedded}, tramite la direttiva \texttt{\#![no\_std]} è possibile escludere la libreria standard: in questa configurazione, l'unico requisito è un bootstrap che invochi la funzione \texttt{\_start} per fare iniziare l'esecuzione;
     \item \textbf{Accesso diretto alla memoria} (Come C): Tramite una parola chiave, \textit{unsafe}, Rust mette a disposizione cinque operazioni denominate \textit{superpoteri non sicuri}: tra queste si trovano anche la possibilità di dereferenziare un puntatore raw (come in C) e la possiblità di eseguire codice C o assembly;
-    \item \textbf{Manipolazione di bit} (Come C): Rust offre lo stesso livello di manipolazione dei singoli bit di C, con un'unica differenza: le operazioni bitwise in Rust sono ben definite in quanto le dimensioni vengono controllate durante la compilazione, non risultano mai in \textit{Undefined Behaviour};
-    \item \textbf{Somiglianza al codice macchina} (Diverso da C): Rust generalmente offre astrazioni di alto livello, inoltre il compilatore può: inserire controlli per gli indici di accesso agli \textit{slice}\footnote{Slice è un tipo primitivo in Rust. Sono un riferimento a una porzione contigua (in memoria) di elementi di una collezione. Non memorizzano dati esplicitamente, si tratta di una vista su dati esistenti.} durante la traduzione, eseguire copie o spostamenti extra per mantenere invariate le ownership od omettere chiamate ad alcune funzioni (e.g. \textit{panic} oppure di controllo del tipo);
+    \item \textbf{Manipolazione di bit} (Come C): Rust offre lo stesso livello di manipolazione dei singoli bit di C, con un'unica differenza: le operazioni bitwise in Rust sono ben definite, evitando condizioni di \textit{Undefined Behaviour} tramite controlli statici sulle dimensione e tipi degli operandi;
+    \item \textbf{Somiglianza al codice macchina} (Diverso da C): Rust generalmente offre astrazioni di alto livello, inoltre il compilatore può introdurre copie e spostamenti aggiuntivi per preservare le condizioni di ownership o inserire controlli su accessi e indici per gli \textit{slice}\footnote{Slice è un tipo primitivo in Rust. Sono un riferimento a una porzione contigua (in memoria) di elementi di una collezione. Non memorizzano dati esplicitamente, si tratta di una vista su dati esistenti.}. Tali comportamenti, pur aumentando la sicurezza, possono produrre un codice meno `trasparente' rispetto alla controparte C;\ 
 \end{itemize}
-Inoltre, a differenza di C, Rust garantisce già a tempo della compilazione l'integrità e la sicurezza della memoria, evitando 
-problematiche legate alla gestione della memoria grazie al \textit{modello di ownership} impiegato da Rust. In quanto i controlli effettuati
+Infine, a differenza di C, Rust garantisce l'integrità e la sicurezza della memoria già a tempo della compilazione, prevenendo 
+errori comuni legati alla gestione della memoria grazie al \textit{modello di ownership}. In quanto i controlli effettuati
 dal \textit{Borrow Checker} avvengono a tempo di compilazione non si hanno dipendenze o overhead introdotti a runtime.
 
 \subsection*{Unsafe Rust}
-Come già accennato, Rust mette a disposizione, tramite la parola chiave \textit{unsafe}, cinque operazioni. Gli sviluppatori
+Come già accennato, Rust mette a disposizione, tramite la parola chiave \textit{unsafe}, cinque operazioni principali. Gli sviluppatori
 del progetto Rust si riferiscono a queste operazioni con l'espressione \textit{Unsafe Superpowers}:
 \begin{itemize}
     \item Dereference di un puntatore raw;
@@ -127,13 +129,11 @@ comunque controlli per garantire la validità delle reference.
 
 La parola chiave permette solamente di eseguire operazioni che, per definizione, sono considerate non sicure. 
 Il compilatore non può controllarne la sicurezza e l'integrità durante la compilazione; all'interno di un blocco
- \textit{unsafe}, è il programmatore diventa responsabile di garantire che gli accessi alla memoria
-siano validi.
-
-La \textit{best practice} riguardante i blocci non sicuri prevede di ridurre il codice non sicuro il più possibile, utilizzandolo solo quando stretto necessario.
+ \textit{unsafe}, è il programmatore a diventare responsabile di garantire che gli accessi alla memoria
+siano validi. \hfill
+\vspace{12pt}\\
+\noindent La \textit{best practice} riguardante i blocchi non sicuri prevede di ridurre il codice non sicuro il più possibile, utilizzandolo solo quando stretto necessario.
 Inoltre, è preferito incapsulare il codice non sicuro all'interno di un'astrazione sicura, fornendo una API sicura per il suo utilizzo. \hfill
-\vspace{20pt}\\
-\noindent Le informazioni riguardanti unsafe Rust sono principalmente ricavate dalla documentazione ufficiale.\cite{rust-book}
 \subsection{Gestione delle risorse}
 \subsection{Sicurezza della memoria}
 \subsection{Prestazioni}
