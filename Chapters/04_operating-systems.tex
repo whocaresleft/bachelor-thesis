@@ -136,5 +136,105 @@ siano validi. \hfill
 Inoltre, è preferito incapsulare il codice non sicuro all'interno di un'astrazione sicura, fornendo una API sicura per il suo utilizzo. \hfill
 \subsection{Gestione delle risorse}
 \subsection{Sicurezza della memoria}
+In questa sottosezione verranno analizzati alcuni tra gli errori più comuni legati alla gestione della memoria,
+mostrando esempi di codice scritti in C e confrontandoli, quando possibile, con le controparti in Rust.
+
+Un aspetto interessante del modello di memoria di Rust è che alcuni errori non sono semplicemente rilevati
+durante l'esecuzione, o a tempo di compilazione, ma sono strutturalmente impossibili da generare.
+Come già accennato, il \textit{modello di ownership} guida la struttura di un programma in Rust: spinge il programmatore a
+ragionare in termini di \textit{ownership} e \textit{lifetime}.
+Come conseguenza diretta, alcuni problemi frequenti come \textit{dangling pointers}, \textit{double free} o \textit{use after free} sono
+impediti staticamente: il compilatore rifiuta di compilare codice che potenzialmente potrebbe causarli.
+
+\subsubsection{Memoria non liberata (\textit{unfreed memory})}
+La memoria non liberata rappresenta un errore comune durante la gestione della memoria dinamica tramite approccio manuale.
+Si ha in quei contesti in cui la memoria viene allocata, senza venire deallocata esplicitamente. Queste aree di memoria non
+possono essere riutilizzate per allocazioni successive in quanto vengono considerate ancora utilizzate.
+Si consideri il seguente esempio minimale C che genera un'errore di unfreed memory:
+\begin{lstlisting}[language=C, caption={Unfreed memory in C}, label={c:unfreed-memory}]
+#include <stdlib.h>
+int main(void) {
+    void* mem = malloc(sizeof(int));
+    return 0;
+}
+\end{lstlisting}
+In Rust questo comportamento non si potrà mai realizzare, in quanto la deallocazione viene gestita implicitamente dal compilatore\footnote{Il compilatore inserisce chiamate alla funzione \textit{drop} in corrispondenza della fine di uno scope. Questo è realizzabile in quanto il \textit{Borrow Checker} controlla le relazioni di \textit{ownership} e \textit{borrowing} per determinare chi sia responsabile della deallocazione, ovvero su quali variabili invocare \textit{drop}.}.
+Si consideri un programma in Rust che replica il comportamento del listato precedente:
+\begin{lstlisting}[language=Rust, caption={Unfreed memory in Rust}, label={rust:unfreed-memory}]
+fn main() {
+    let mem = Box::<u32>::new(0);
+}
+\end{lstlisting}
+Nel listato~\ref{c:unfreed-memory} viene allocata memoria nella heap sufficiente a contenere un intero, successivamente 
+il programma termina senza liberarla. Il programma viene compilato ed eseguito correttamente, 
+nonostante la presenza di questo errore. 
+
+In realtà l'allocazione avviene nello spazio di memoria virtuale del processo; a termine dell'esecuzione, il sistema operativo recupera tutte le risorse allocate dal processo. 
+Tuttavia, tale memoria risulta inaccessibile per ulteriori allocazioni da parte del processo durante la sua esecuzione.\hfill
+\vspace{10pt}\\
+\noindent Il listato~\ref{rust:unfreed-memory} rappresenta il codice Rust più vicino possibile a 
+quello del listato precedente. La differenza principale è che la memoria viene deallocata automaticamente: 
+al termine dello scope della funzione \texttt{main}, la variabile \texttt{mem} viene eliminata e la relativa 
+memoria deallocata. 
+
+Di conseguenza, l'errore di \textit{unfreed memory} non può manifestarsi, in quanto la deallocazione avviene in maniera 
+trasparente agli occhi del programmatore. 
+
+
+% Double free
+\subsubsection{Doppia liberazione (\textit{double free})}
+\textit{Double free} è un'errore di gestione della memoria che si verifica la stessa area di memoria viene deallocata
+più di una volta. Ciò può causare la corruzione della memoria heap, con conseguente comportamento indefinito, crash del programma o
+potenziali vulnerabilità di sicurezza.
+
+Nel linguaggio C, questo si verifica invocando la funzione \texttt{free} sullo stesso puntatore più volte, come mostrato 
+nel seguente esempio:
+\begin{lstlisting}[language=C, caption={Double free in C}, label={c:double-free}]
+#include <stdlib.h>
+int main(void) {
+    void* mem = malloc(sizeof(int));
+    free(mem);
+    free(mem);
+    return 0;
+}
+\end{lstlisting}
+Si consideri invece il seguente programma Rust che tenta di replicare lo stesso comportamento del listato~\ref{c:double-free}:
+\begin{lstlisting}[language=Rust, caption={Double free in Rust}, label={rust:double-free}]
+fn main() {
+    let mem = Box::<u32>::new(0);
+    std::mem::drop(mem);
+    std::mem::drop(mem);
+}
+\end{lstlisting}
+Nel listato~\ref{c:double-free} la memoria puntata da \texttt{mem} viene deallocata due volte.
+In fase di esecuzione questo può portare a un crash del programma, come mostrato nell'immagine~\ref{c:double-free-exec}.
+
+Tuttavia, lo standard C non definisce un comportamento specifico da adottare in questo contesto, causando 
+\textit{undefined behaviour} nella pratica\footnote{In ambiente Linux con \texttt{glibc}, viene rilevato l'errore causando
+ la stampa di un messaggio e l'interruzione dell'esecuzione. In ambienti Windows, l'errore può passare inosservato o causare un crash silenzioso.}.
+
+Per quanto riguarda Rust, è possibile considerare due scenari: 
+\begin{itemize}
+    \item Il listato~\ref{rust:unfreed-memory} rappresenta il comportamento idiomatico di Rust: la memoria viene deallocata automaticamente alla fine di uno \textit{scope}, senza necessità di interventi manuali;
+    \item Nel listato~\ref{rust:double-free}, invece, si tenta di deallocare esplicitamente la memoria con due chiamate consecutive a \texttt{std::mem::drop}\footnote{Questa funzione causa uno spostamento dell'\textit{ownership} del valore fornito, causandone la deallocazione una volta raggiunta la fine dello scope.}. Tuttavia, la funzione \texttt{drop} prende possesso del valore, rendendo la reference originale, e di conseguenza la seconda chiamata, invalida. Il compilatore si accorge della violazione della terza regola di \textit{borrowing (Tutte le reference devono essere valide)}, impedendo la compilazione e generando l'errore riportato nell'immagine~\ref{rust:double-free-compile}.
+\end{itemize}
+\begin{figure}[htbp]
+\begin{center}
+    \includegraphics[width=.8\textwidth]{double-free-c-exec}
+    \caption{\textit{Double free} in C}\label{c:double-free-exec}
+    \end{center}
+\end{figure}
+\begin{figure}[htbp]
+\begin{center}
+    \includegraphics[width=.8\textwidth]{double-free-rust-compile}
+    \caption{Tentativo di \textit{double free} in Rust}\label{rust:double-free-compile}
+    \end{center}
+\end{figure}
+
+% Access after free
+% Dangling pointers
+% Buffer Overflow
+% Unitialized memory access
+
 \subsection{Prestazioni}
 \subsection{Complessità del codice}

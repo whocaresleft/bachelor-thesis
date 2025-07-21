@@ -42,14 +42,14 @@ In relazione alla gestione della memoria, Rust definisce due comportamenti disti
 \end{itemize}
 
 \noindent I seguenti esempi illustrano il comportamento dell'assegnamento nei tipi semplici, che implementano \texttt{Copy}, e in quelli complessi, che implementano \texttt{Move}:
-\begin{lstlisting}[style=ruststyle, caption={Comportamento di Copy}, label={ownership:copy-example}]
+\begin{lstlisting}[language=Rust, caption={Comportamento di Copy}, label={ownership:copy-example}]
 fn main() {
     let x: i32 = 5;
     let y: i32 = x;
     println!("x: {}, y: {}", x, y);
 }
 \end{lstlisting}
-\begin{lstlisting}[style=ruststyle, caption={Comportamento di Move}, label={ownership:move-example}]
+\begin{lstlisting}[language=Rust, caption={Comportamento di Move}, label={ownership:move-example}]
 fn main() {
     let x: String = String::from("Sono in Heap!");
     let y: String = x;
@@ -67,7 +67,7 @@ Per ovviare a tale limitazione, Rust fornisce un meccanismo per effettuare copie
 Il tratto \texttt{Clone} permette di definire esplicitamente come realizzare la copia profonda di un valore. L'invocazione del metodo \texttt{clone()} genera un nuovo valore, indipendente dal primo, ma con lo stesso contenuto.
 
 Si consideri il seguente esempio, che mostra il comportamento di \texttt{Clone}:\hfill
-\begin{lstlisting}[style=ruststyle, caption={Comportamento di Clone}, label={ownership:clone-example}]
+\begin{lstlisting}[language=Rust, caption={Comportamento di Clone}, label={ownership:clone-example}]
 fn main() {
     let x: String = String::from("Sono in Heap!");
     let y: String = x.clone();
@@ -81,7 +81,7 @@ Nel listato~\ref{ownership:clone-example} si osserva che sia \texttt{x} che \tex
 Rust gestisce il passaggio di un parametro a una funzione in maniera analoga agli assegnamenti: le stesse regole di \texttt{Copy} e \texttt{Move} continuano ad applicarsi.
 
 Si consideri il seguente esempio che illustra il comportamento di Rust nel passaggio a funzione di un valore di tipo semplice e di uno di tipo complesso:
-\begin{lstlisting}[style=ruststyle, caption={Trasferimento di ownership nelle chiamate a funzione}, label={ownership:func-example}]
+\begin{lstlisting}[language=Rust, caption={Trasferimento di ownership nelle chiamate a funzione}, label={ownership:func-example}]
 fn my_func(first: i32, second: String) {
     println!("Parametro 'first' {}", first);
     println!("Parametro 'second' {}", second);
@@ -114,7 +114,7 @@ Rust implementa concretamente il \textit{borrowing} tramite il concetto di \text
     \item Una reference mutabile può essere creata solo da una variabile dichiarata come \texttt{mut}.\footnote{Questo vincolo è spesso dato per implicito, ma è fondamentale nel comportamento del \textit{Borrow Checker}.}
 \end{itemize}
 Si considerino i seguenti esempi, che illustrano violazioni delle regole di borrowing. Essi hanno lo scopo di mostrare come tali comportamenti non siano ammessi dal Borrow Checker, generando errori in fase di compilazione.
-\begin{lstlisting}[style=ruststyle, caption={Reference mutabile a variabile immutabile}, label={borrow:mut-from-unmut}]
+\begin{lstlisting}[language=Rust, caption={Reference mutabile a variabile immutabile}, label={borrow:mut-from-unmut}]
 fn main() {
     let x: u8 = 5;
     let mut y: &mut u8 = &mut x;
@@ -122,7 +122,7 @@ fn main() {
 }
 \end{lstlisting}
 
-\begin{lstlisting}[style=ruststyle, caption={Due reference mutabili alla stessa variabile}, label={borrow:two-mutable}]
+\begin{lstlisting}[language=Rust, caption={Due reference mutabili alla stessa variabile}, label={borrow:two-mutable}]
 fn main() {
     let mut x: u8 = 5;
 
@@ -136,7 +136,7 @@ fn main() {
 }
 \end{lstlisting}
 
-\begin{lstlisting}[style=ruststyle, caption={Coesistenza reference mutabile e immutabile}, label={borrow:mut-and-unmut}]
+\begin{lstlisting}[language=Rust, caption={Coesistenza reference mutabile e immutabile}, label={borrow:mut-and-unmut}]
 fn main() {
     let mut x: u8 = 5;
 
@@ -149,7 +149,7 @@ fn main() {
 }
 \end{lstlisting}
 
-\begin{lstlisting}[style=ruststyle, caption={Reference non valida: \textit{dangling reference}}, label={borrow:dangling-reference}]
+\begin{lstlisting}[language=Rust, caption={Reference non valida: \textit{dangling reference}}, label={borrow:dangling-reference}]
 fn main() {
     let dangling_reference: &u8;
 
@@ -209,7 +209,7 @@ Il sistema delle \textit{lifetime} rappresenta il terzo concetto fondamentale su
 Nella maggior parte dei casi, le \textit{lifetime} sono implicite e dedotte automaticamente dal compilatore\footnote{Per questo motivo, durante lettura di codice Rust, le annotazioni di \textit{lifetime} sono spesso non visibili.}, in questo caso, vengono definite \textit{lifetime generiche}. In contesti particolari, tuttavia, è necessario esplicitarle, specialmente quando può crearsi ambiguità riguardo la durata di una reference, ad esempio quando si lavora simultaneamente con reference che appartengono a scope differenti.
 
 Si consideri, a riguardo, il seguente esempio, che mostra come le \textit{lifetime} implicite non siano sufficienti in alcuni contesti:
-\begin{lstlisting}[style=ruststyle, caption={Limitazione delle \textit{lifetime} generiche}, label={lifetime:generic-problem}]
+\begin{lstlisting}[language=Rust, caption={Limitazione delle \textit{lifetime} generiche}, label={lifetime:generic-problem}]
 fn biggest(a: &u8, b: &u8) -> &u8 {
     if *a > *b { a } else { b }
 }
@@ -219,7 +219,7 @@ Il problema nasce dal fatto che le reference \texttt{a} e \texttt{b} potrebbero 
 Il compilatore, con le \textit{lifetime generiche}, cerca di assegnare la stessa durata ad entrambe le reference, generando ambiguità. \hfill \break \break
 \noindent Per esplicitare una durata di vita di una reference si utilizza un'annotazione di \textit{lifetime} posta prima del tipo. Questa è rappresentata da un apostrofo seguito da un identificativo; per convenzione si usa una sola lettera, seguento l'ordine alfabetico (\texttt{'a}, \texttt{'b} e così via).
 Riferendoci all'esempio del listato~\ref{lifetime:generic-problem}, di seguito si presenta la versione corretta, con \textit{lifetime esplicite}:
-\begin{lstlisting}[style=ruststyle, caption={\textit{Lifetime} esplicite}, label={lifetime:explicit-solved}]
+\begin{lstlisting}[language=Rust, caption={\textit{Lifetime} esplicite}, label={lifetime:explicit-solved}]
 fn biggest<'a>(a: &'a u8, b: &'a u8) -> &'a u8 {
     if *a > *b { a } else { b }
 }
@@ -228,7 +228,7 @@ Nel listato~\ref{lifetime:explicit-solved} viene dichiarata una singola \textit{
 \noindent È importante fare una precisazione: esplicitare una \textit{lifetime} \textbf{non modifica} l'effettiva durata di una variabile. Si tratta solamente di un'indicazione semantica che informa il compilatore dei vincoli temporali che devono essere rispettati tra le \textit{reference} coinvolte. Il \textit{Borrow Checker} utilizza queste annotazioni per verificare la validità dei prestiti nel tempo e può rifiutare il codice se i vincoli non sono coerenti.
 
 A tale scopo, si consideri il seguente esempio, che mostra come il \textit{Borrow Checker} possa rifiutare una reference che non rispetti le \textit{lifetime} specificate:
-\begin{lstlisting}[style=ruststyle, caption={Limitazioni delle \textit{lifetime}}, label={lifetime:explicit-problem}]
+\begin{lstlisting}[language=Rust, caption={Limitazioni delle \textit{lifetime}}, label={lifetime:explicit-problem}]
 fn biggest<'a>(a: &'a u8, b: &'a u8) -> &'a u8 {
     if *a > *b { a } else { b }
 }
