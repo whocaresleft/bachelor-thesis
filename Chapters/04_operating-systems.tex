@@ -183,7 +183,7 @@ trasparente agli occhi del programmatore.
 
 % Double free
 \subsubsection{Doppia liberazione (\textit{double free})}
-\textit{Double free} è un'errore di gestione della memoria che si verifica la stessa area di memoria viene deallocata
+La doppia liberazione è un'errore di gestione della memoria che si verifica la stessa area di memoria viene deallocata
 più di una volta. Ciò può causare la corruzione della memoria heap, con conseguente comportamento indefinito, crash del programma o
 potenziali vulnerabilità di sicurezza.
 
@@ -231,11 +231,47 @@ Per quanto riguarda Rust, è possibile considerare due scenari:
     \end{center}
 \end{figure}
 
+% Dangling pointer e Access after free
+\subsubsection{Puntatori pendenti (\textit{dangling pointers})}
+Un \textit{dangling pointer} è un puntatore che continua a riferire a una locazione di memoria non più valida o che è stata liberata. 
+Generalmente accade quando un'area di memoria viene deallocata, ma eventuali puntatori che la referenziavano non vengono aggiornati correttamente.
+Si consideri il seguente esempio C che genera un \textit{dangling pointer}:
+\begin{lstlisting}[language=C, caption={Dangling pointer in C}, label={c:dangling-pointer}]
+int main(void) {
+    int* ptr;
+    {
+        int* val = malloc(sizeof(int));
+        *val = 30;
+        ptr = val;
+        free(val);
+    }
+}
+\end{lstlisting}
+Nel listato~\ref{c:dangling-pointer}, viene allocata memoria sufficiente per un intero e il suo indirizzo è memorizzato 
+sia in \texttt{val} che in \texttt{ptr}. La memoria viene successivamente deallocata invocando la funzione free sul puntatore val.
+Tuttavia, il puntatore ptr non viene aggiornato, facendo riferimento a memoria non più valida.
+
+è opportuno osservare che la sola esistenza un un dangling pointer non genera un errore immediato.
+Si può presentare un comportamento indefinito solo quando si tenta di derefenziarlo, per leggerne o modificarne il contenuto.
+
+
+Anche in Rust si riflette questa considerazione, è possibile creare una dangling reference, a patto che non venga usata, come mostrato dal seguente esempio
+\begin{lstlisting}[language=Rust, caption={Dangling reference in Rust}, label={rust:dangling-pointer}]
+fn main() {
+    let _ref: &u32;
+    {
+        let val = Box::<u32>::new(30);
+        _ref = &*val;
+    }
+}
+\end{lstlisting}
+Il listato~\ref{rust:dangling-pointer} tenta di emulare il comportamento descritto nel listato precedente~\ref{c:dangling-pointer}. è interessante osservare
+che il compilatore accetta questo codice, non generando errori. Questo è dovuto al fatto che la reference non è utilizzata, non generando quindi una criticità
+dal punto di vista della sicurezza di memoria: il Borrow Checker infatti, controlla la reference in maniera lazy\footnote{}.
+
 % Access after free
 \subsubsection{Accesso post-liberazione (\textit{access after free})}
 
-% Dangling pointers
-\subsubsection{Puntatore penzolante (\textit{dangling pointer})}
 
 % Buffer Overflow
 \subsubsection{Sovraccarico del buffer (\textit{buffer Overflow})}
