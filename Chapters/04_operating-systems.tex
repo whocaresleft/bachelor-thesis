@@ -142,7 +142,8 @@ mostrando esempi di codice scritti in C e confrontandoli, quando possibile, con 
 Un aspetto interessante del modello di memoria di Rust è che alcuni errori non sono semplicemente rilevati
 durante l'esecuzione, o a tempo di compilazione, ma sono strutturalmente impossibili da generare.
 Come già accennato, il \textit{modello di ownership} guida la struttura di un programma in Rust: spinge il programmatore a
-ragionare in termini di \textit{ownership} e \textit{lifetime}.
+ragionare in termini di \textit{ownership} e \textit{lifetime}. Inoltre, l'allocazione della memoria dinamica è gestita tramite l'utilizzo
+di \textit{smart pointers}, che forniscono un'astrazione sicura per la gestione della memoria dinamica.
 
 Come conseguenza diretta, alcuni problemi frequenti come \textit{dangling pointers}, \textit{double free} o \textit{use after free} sono
 impediti staticamente: il compilatore rifiuta di compilare codice che potenzialmente potrebbe causarli.
@@ -348,7 +349,79 @@ delle regole di \textit{borrowing} e, di conseguenza, impedisce la compilazione.
 \subsubsection{Sovraccarico del buffer (\textit{buffer Overflow})}
 
 % Unitialized memory access
-\subsubsection{Accesso a memoria non inizializzata (\textit{unitialized memory access})}
+\subsubsection{Accesso a memoria non inizializzata (\textit{unitialized memory access})} 
+La \textit{unitialized memory access} è un errore che si presenta
+ quando si tenta di leggere da un'area di memoria che non è stata 
+ inizializzata. Questo può portare a comportamenti imprevedibili, in quanto 
+ i dati letti potrebbero essere casuali o obsoleti, potenzialmente 
+ residui da allocazioni precedenti.
+
+Nel linguaggio C, questo errore si presenta tipicamente quando viene 
+allocata memoria tramite la funzione \texttt{malloc} e successivamente si tenta di 
+accedervi senza previa inizializzazione.
+
+Si consideri il seguente esempio C che genera un errore di questo tipo:
+\begin{lstlisting}[language=C, caption={Uninitialized memory access in C}, label={c:uninitialized-memory-access}]
+#include <stdlib.h>
+#include <stdio.h>
+int main(void) {
+    int* ptr = malloc(sizeof(int));
+    printf("%d\n", *ptr);
+    free(ptr);
+    return 0;
+}
+\end{lstlisting}
+Nel listato~\ref{c:uninitialized-memory-access} viene allocata memoria sufficiente a contenere un intero e, senza inizializzarne il contenuto,
+viene tentato un accesso in lettura. 
+Il risultato è un comportamento indefinito: il valore letto potrebbe variare tra diverse esecuzioni o ambienti, senza garanzia di coerenza.
+
+È possibile osservare un caso particolare, in cui l'accesso può sembrare produrre un risultato coerente, come mostrato nell'immagine~\ref{c:uninitialized-memory-access-exec}\footnote{L'esecuzione è avvenuta su Ubuntu LTS con \texttt{glibc}. In questo contesto è possibile che \texttt{malloc} azzeri la memoria allocata, prima di restituirne l'indirizzo, ma non è un comportamento garantito dallo standard C.}.
+Tuttavia, questa apparente stabilità non può essere considerata una garanzia, in quanto vi sono più fattori che possono influenzare il valore letto:
+\begin{itemize}
+    \item Implementazioni specifiche dell'allocatore di memoria, che possono inizializzare la memoria allocata a zero o a un valore casuale;
+    \item La posizione in memoria scelta dall'allocatore per il puntatore;
+    \item Eventuali valori residui da allocazioni precedenti;
+    \item La mappatura tra pagine virtuali e fisiche da parte del sistema operativo.
+\end{itemize}
+A conferma dell'inaffidabilità, si consideri il seguente esempio, che estende il listato~\ref{c:uninitialized-memory-access}: 
+\begin{lstlisting}[language=C, caption={Uninitialized memory access in C}, label={c:uninitialized-memory-access-2}]
+#include <stdlib.h>
+#include <stdio.h>
+int main(void) {
+    int* ptr = malloc(sizeof(int));
+    free(ptr);
+    ptr = malloc(sizeof(int));
+    printf("%d\n", *ptr);
+    free(ptr);
+    return 0;
+}
+\end{lstlisting}
+Il listato~\ref{c:uninitialized-memory-access-2} mostra come eseguire una \texttt{free} prima della \texttt{malloc} successiva può lasciare residui nella memoria. 
+Di conseguenza il valore letto, questa volta, è diverso da zero, come si può osservare dall'immagine~\ref{c:uninitialized-memory-access-exec-2}\footnote{Anche in questo caso, si tratta di un comportamento specifico del sistema e non garantito dallo standard}. \hfill
+\begin{figure}[htbp]
+\begin{center}
+    \includegraphics[width=.8\textwidth]{c-uninitialized-memory-access-exec}
+    \caption{\textit{Uninitialized memory access in C} in C}\label{c:uninitialized-memory-access-exec}
+    \end{center}
+\end{figure}
+\begin{figure}[htbp]
+\begin{center}
+    \includegraphics[width=.8\textwidth]{c-uninitialized-memory-access-exec-2}
+    \caption{\textit{Uninitialized memory access in C con previa free} in C}\label{c:uninitialized-memory-access-exec-2}
+    \end{center}
+\end{figure}
+\vspace{10pt}\\
+\noindent Rust previene questa problematica in maniera strutturale, prevenendo gli accessi a memoria non inizializzata grazie al modello di \texttt{ownership} e all'utilizzo di \texttt{smart pointers}, i quali prevedono una inizializzazione obbligatoria.
+
+In Rust infatti, le principali primitive per l'allocazione dinamica richiedono sempre l'inizializzazione dei valori:
+\begin{itemize}
+    \item \texttt{Box}: \textit{smart pointer} impiegato per allocare un singolo valore nella heap. L'unico modo per crearne uno è tramite \texttt{Box::new}, che richiede un valore per l'inizializzazione. In safe Rust, non esiste un costrutto equivalente alla \texttt{malloc} in C;\ 
+    \item \texttt{Vec}: utilizzato per una collezione dinamica di valori in heap. Anche se può essere creato vuoto (\texttt{Vec::new}), ogni accesso è verificato a runtime per evitare accessi oltre i limiti. In caso di violazioni viene generato un \texttt{panic}, terminando l'esecuzione, come è osservabile nell'immagine [mettere sopra];
+\end{itemize}
+Di conseguenza, non è possibile sviluppare codice Rust che acceda a memoria non inizializzata senza ricorrere alla parola chiave \texttt{unsafe}\footnote{Rust consenge l'accesso a memoria potenzialmente non inizializzata, ma soltanto all'interno di blocchi \textit{unsafe}. Un esempio è la funzione \texttt{std::mem::MaybeUninit}, ma meccanismi come questo sono riservati a casi particolari, in cui le garanzie di sicurezza devono essere gestite manualmente dal programmatore.}.
+
+
+
 
 \subsection{Prestazioni}
 \subsection{Complessità del codice}
