@@ -140,20 +140,18 @@ In questa sottosezione verranno analizzati alcuni tra gli errori più comuni leg
 mostrando esempi di codice scritti in C e confrontandoli, quando possibile, con le controparti in Rust.
 
 Un aspetto interessante del modello di memoria di Rust è che alcuni errori non sono semplicemente rilevati
-durante l'esecuzione, o a tempo di compilazione, ma sono strutturalmente impossibili da generare.
+durante l'esecuzione, o a tempo di compilazione, ma sono strutturalmente impossibili da generare: non vi è modo di scrivere codice Rust che generi tali errori.
 Come già accennato, il \textit{modello di ownership} guida la struttura di un programma in Rust: spinge il programmatore a
 ragionare in termini di \textit{ownership} e \textit{lifetime}. Inoltre, l'allocazione della memoria dinamica è gestita tramite l'utilizzo
 di \textit{smart pointers}, che forniscono un'astrazione sicura per la gestione della memoria dinamica.
 
-Come conseguenza diretta, alcuni problemi frequenti come \textit{dangling pointers}, \textit{double free} o \textit{use after free} sono
-impediti staticamente: il compilatore rifiuta di compilare codice che potenzialmente potrebbe causarli.
-
-\subsubsection{Memoria non liberata (\textit{unfreed memory})}
-La memoria non liberata rappresenta un errore comune durante la gestione della memoria dinamica tramite approccio manuale.
-Si ha in quei contesti in cui la memoria viene allocata, senza venire successivamente deallocata. Queste aree di memoria non
+% Unfreed memory
+\subsubsection{Unfreed memory}
+La \textit{unfreed memory} (memoria non liberata) rappresenta un errore comune durante la gestione della memoria dinamica tramite approccio manuale.
+Si ha in quei contesti in cui aree di memoria vengono allocate, senza successiva deallocazione. Le aree di memoria interessate non
 possono essere riutilizzate per allocazioni successive in quanto vengono considerate ancora utilizzate.
 
-Si consideri il seguente esempio minimale C che genera un'errore di unfreed memory:
+Si consideri il seguente esempio minimale C che genera un'errore di \textit{unfreed memory}:
 \begin{lstlisting}[language=C, caption={Unfreed memory in C}, label={c:unfreed-memory}]
 #include <stdlib.h>
 int main(void) {
@@ -163,7 +161,7 @@ int main(void) {
 \end{lstlisting}
 In Rust questo comportamento non si potrà mai realizzare, in quanto la deallocazione viene gestita implicitamente dal compilatore\footnote{Il compilatore inserisce chiamate alla funzione \textit{drop} in corrispondenza della fine di uno scope. Questo è realizzabile in quanto il \textit{Borrow Checker} controlla le relazioni di \textit{ownership} e \textit{borrowing} per determinare chi sia responsabile della deallocazione, ovvero su quali variabili invocare \textit{drop}.}. \hfill
 
-\noindent Si consideri un programma in Rust che, per quanto possibile, replica il comportamento del listato precedente:
+\noindent Si consideri un programma in Rust che, per quanto possibile, replica il comportamento del listato~\ref{c:unfreed-memory}:
 \begin{lstlisting}[language=Rust, caption={Unfreed memory in Rust}, label={rust:unfreed-memory}]
 fn main() {
     let mem = Box::<u32>::new(0);
@@ -176,7 +174,7 @@ nonostante la presenza di questo errore.
 Tuttavia, tale memoria risulta inaccessibile per ulteriori allocazioni da parte del processo durante la sua esecuzione.\hfill
 \vspace{10pt}\\
 \noindent Il listato~\ref{rust:unfreed-memory} rappresenta il codice Rust più vicino possibile a 
-quello del listato precedente. La differenza principale è che la memoria viene deallocata automaticamente: 
+quello riportato nel listato~\ref{c:unfreed-memory}. La differenza principale è che la memoria viene deallocata automaticamente: 
 al termine dello scope della funzione \texttt{main}, la variabile \texttt{mem} viene eliminata e la relativa 
 memoria deallocata. 
 
@@ -185,10 +183,9 @@ trasparente agli occhi del programmatore.
 
 
 % Double free
-\subsubsection{Doppia liberazione (\textit{double free})}
-La doppia liberazione è un'errore di gestione della memoria che si verifica quando la stessa area di memoria viene deallocata
-più di una volta. Ciò può causare la corruzione della memoria heap, con conseguente comportamento indefinito, crash del programma o
-potenziali vulnerabilità di sicurezza.
+\subsubsection{Double free}
+La \textit{double free} (doppia liberazione) è un'errore di gestione della memoria che si verifica quando la stessa area di memoria viene deallocata
+più di una volta. Ciò può causare la corruzione della memoria heap, con conseguente comportamento indefinito o crash del programma.
 
 Nel linguaggio C, questo si verifica invocando la funzione \texttt{free} sullo stesso puntatore più volte, come mostrato 
 nel seguente esempio:
@@ -196,9 +193,9 @@ nel seguente esempio:
 \begin{lstlisting}[language=C, caption={Double free in C}, label={c:double-free}]
 #include <stdlib.h>
 int main(void) {
-    void* mem = malloc(sizeof(int));
-    free(mem);
-    free(mem);
+    void* ptr = malloc(sizeof(int));
+    free(ptr);
+    free(ptr);
     return 0;
 }
 \end{lstlisting}
@@ -211,7 +208,7 @@ fn main() {
     std::mem::drop(mem);
 }
 \end{lstlisting}
-Nel listato~\ref{c:double-free} la memoria puntata da \texttt{mem} viene deallocata due volte.
+Nel listato~\ref{c:double-free} la memoria puntata da \texttt{ptr} viene deallocata due volte.
 In fase di esecuzione questo può portare a un crash del programma, come mostrato nell'immagine~\ref{c:double-free-exec}.
 
 Tuttavia, lo standard C non definisce un comportamento specifico da adottare in questo contesto, causando 
@@ -221,7 +218,7 @@ Tuttavia, lo standard C non definisce un comportamento specifico da adottare in 
 Per quanto riguarda Rust, è possibile considerare due scenari: 
 \begin{itemize}
     \item Il listato~\ref{rust:unfreed-memory} rappresenta il comportamento idiomatico di Rust: la memoria viene deallocata automaticamente alla fine di uno \textit{scope}, senza necessità di interventi manuali;
-    \item Nel listato~\ref{rust:double-free}, invece, si tenta di deallocare esplicitamente la memoria con due chiamate consecutive a \texttt{std::mem::drop}\footnote{Questa funzione causa uno spostamento dell'\textit{ownership} del valore fornito, causandone la deallocazione una volta raggiunta la fine dello scope.}. Tuttavia, la funzione \texttt{drop} prende possesso del valore, rendendo la reference originale, e di conseguenza la seconda chiamata, invalida. Il compilatore si accorge della violazione della terza regola di \textit{borrowing (Tutte le reference devono essere valide)}, impedendo la compilazione e generando l'errore riportato nell'immagine~\ref{rust:double-free-compile}.
+    \item Nel listato~\ref{rust:double-free}, invece, si tenta di deallocare esplicitamente la memoria con due chiamate consecutive a \texttt{std::mem::drop}\footnote{Questa funzione assume \textit{ownership} del valore fornito, causandone la deallocazione una volta raggiunta la fine della funzione.}. Tuttavia, la funzione \texttt{drop} prende possesso del valore, rendendo la reference originale, e di conseguenza la seconda chiamata, invalida. Il compilatore si accorge della violazione della terza regola di \textit{borrowing} (\textit{Tutte le reference devono essere valide}), impedendo la compilazione e generando l'errore riportato nell'immagine~\ref{rust:double-free-compile}.
 \end{itemize}
 \begin{figure}[htbp]
 \begin{center}
@@ -237,11 +234,11 @@ Per quanto riguarda Rust, è possibile considerare due scenari:
 \end{figure}
 
 % Dangling pointer
-\subsubsection{Puntatori pendenti (\textit{dangling pointers})}
-Un \textit{dangling pointer} è un puntatore che continua a riferire a una locazione di memoria non più valida o che è stata liberata. 
-Generalmente si presenta quando un'area di memoria viene deallocata, ma eventuali puntatori che la referenziavano non vengono aggiornati.
+\subsubsection{Dangling pointers}
+Un \textit{dangling pointer} (puntatore pendente) è un puntatore che riferisce a una locazione di memoria non più valida o che è stata liberata. 
+Generalmente si presenta quando un'area di memoria viene deallocata, ma gli eventuali puntatori che la referenziavano non vengono aggiornati.
 
-Si consideri il seguente esempio C che genera un \textit{dangling pointer}:
+Si consideri il seguente esempio C che genera un \textit{dangling pointer}\footnote{La presenza di uno scope interno non è funzionale all'esempio, ma non ne modifica nemmeno il risultato. È presente per garantire somiglianza strutturale con l'esempio Rust successivo.}:
 \begin{lstlisting}[language=C, caption={Dangling pointer in C}, label={c:dangling-pointer}]
 int main(void) {
     int* ptr;
@@ -255,7 +252,7 @@ int main(void) {
 \end{lstlisting}
 Nel listato~\ref{c:dangling-pointer}, viene allocata memoria sufficiente per un intero e il suo indirizzo è memorizzato 
 sia in \texttt{val} che in \texttt{ptr}. La memoria viene successivamente deallocata invocando la funzione \texttt{free} sul puntatore \texttt{val}.
-Tuttavia, il puntatore \texttt{ptr} non viene aggiornato, continuando a riferire a memoria non più valida.
+Tuttavia, il puntatore \texttt{ptr} non viene aggiornato, continuando a riferire alla stessa area di memoria, ormai non più valida.
 
 È importante osservare che la sola esistenza un un \textit{dangling pointer} non causa un errore immediato.
 Il comportamento indefinito si manifesta solo quando si tenta di derefenziare tale puntatore, cercando di leggere o scrivere nella memoria a cui fa riferimento. \hfill
@@ -281,10 +278,10 @@ le condizioni di \textit{borrowing} e \textit{lifetime} di una reference fino a 
  violazione delle regole di \textit{borrowing}.
 
 % Access after free
-\subsubsection{Accesso post-liberazione (\textit{access after free})}
+\subsubsection{Access after free}
 Sebbene la sola presenza di un \textit{dangling pointer} non causi immediatamente problemi, essa rappresenta una condizione necessaria 
-per un errore più grave: l'accesso post-liberazione.
-Questo errore si verifica quando si tenta di accedere a memoria precedentemente deallocata, dereferenziando un puntatore pendente. 
+per un errore più grave: la \textit{access after free} (accesso post-liberazione).
+Questo errore si verifica quando si tenta di accedere a memoria precedentemente deallocata, dereferenziando un \textit{dangling pointer}. 
 
 A seconda del tipo
 di accesso, si possono avere conseguenze differenti:
@@ -292,7 +289,7 @@ di accesso, si possono avere conseguenze differenti:
     \item \textbf{Lettura}: può causare il recupero di dati non validi o incoerenti, eventualmente sovrascritti da allocazioni successive;
     \item \textbf{Scrittura}: può compromettere l'integrità della memoria, causando comportamenti indefiniti o crash del programma.
 \end{itemize}
-Si consideri il seguente esempio C che, estendendo il listato~\ref{c:dangling-pointer}, genera un errore di accesso post-liberazione:
+Si consideri il seguente esempio C che, estendendo il listato~\ref{c:dangling-pointer}, genera un errore di \textit{access after free}:
 \begin{lstlisting}[language=C, caption={Access after free in C}, label={c:access-after-free}]
 #include <stdlib.h>
 #include <stdio.h>
@@ -310,7 +307,7 @@ int main(void) {
 Nel listato~\ref{c:access-after-free} si tenta di dereferenziare il puntatore \texttt{ptr} dopo che la memoria a cui faceva riferimento è stata deallocata.
 In questo caso, l'accesso avviene per effettuare un'operazione di lettura, che rappresenta una forma
  meno distruttiva rispetto a una scrittura, ma che resta comunque pericolosa:
-i dati letti potrebbero essere incoerenti, non validi o addirittura corrotti.
+i dati letti potrebbero essere non validi o casuali, in quanto la memoria potrebbe essere stata sovrascritta da allocazioni successive.
  
 Questo comportamento rappresenta un esempio di \textit{undefined behaviour}, come illustrato
 dall'immagine~\ref{c:access-after-free-exec}. \hfill
@@ -345,15 +342,137 @@ delle regole di \textit{borrowing} e, di conseguenza, impedisce la compilazione.
     \end{center}
 \end{figure}
 
-% Buffer Overflow
-\subsubsection{Sovraccarico del buffer (\textit{buffer Overflow})}
+% Buffer Overflow e Overread
+\subsubsection{Access out of bounds: buffer overflow e overread}
+L' \textit{access out of bounds} è un errore comune associatio alla gestione manuale della memoria dinamica.
+Si verifica quando si tenta di accedere a una porzione di memoria al di fuori dei limiti dell'area effettivamente allocata.
+
+In base al tipo di accesso si distingue in due varianti: nel caso di una lettura si parla di \textit{buffer overread} 
+(lettura oltre i limiti) mentre, nel caso di una scrittura, di \textit{buffer overflow} (sovraccarico o sovrascrittura del buffer).
+
+\paragraph{Buffer overflow}
+Si consideri il seguente esempio C che genera un errore di \textit{buffer overflow}:
+\begin{lstlisting}[language=C, caption={Buffer overflow in C}, label={c:buffer-overflow}]
+#include <stdlib.h>
+#include <stdio.h>
+int main(void) {
+    int* vec = malloc(sizeof(int) * 3);
+    printf("Allocato un vettore di 3 interi, indici validi: 0, 1, 2\n");
+    for(int i = 0; i <= 3; i++) {
+        printf("Memorizzando %d all'indice %d\n", i * 10, i);
+        vec[i] = i * 10;
+    }
+    free(vec);
+    printf("Terminata la memorizzazione!\n");
+    return 0;
+}
+\end{lstlisting}
+Nel listato~\ref{c:buffer-overflow} viene allocata memoria suffiente per un vettore di tre interi, ma successivamente vengono
+inizializzati quattro elementi, dall'indice \texttt{0} fino a \texttt{3}.
+In questo caso il programma termina senza errori, viene anche eseguita la stampa finale, come mostrato dall'immagine~\ref{c:buffer-overflow-exec}. 
+
+Nonostante ciò, questo comportamento non può essere considerato una garanzia in quanto, generalmente, la conseguenza di un \textit{buffer overflow} è un \textit{undefined behaviour}: 
+non è possibile determinare a priori cosa contenga la memoria oltre
+il limite dell'allocazione o per cosa venga utilizzata\footnote{In generale un \textit{buffer overflow} avviene all'interno dello spazio
+di indirizzamento virtuale di un processo. In questo caso, la memoria potenzialmente corrotta sarebbe
+ del processo stesso. Tuttavia, nel caso in cui l'indirizzo di riferimento
+ fosse al di fuori dello spazio di indirizzamento virtuale del processo verrebbe generato un'errore runtime di tipo \textit{segmentation fault}, 
+ causando l'immediato crash del programma.}. \hfill
+\vspace{10pt}\\
+\noindent Per comprendere come Rust gestisca questo errore, si consideri il seguente esempio:
+\begin{lstlisting}[language=Rust, caption={Buffer overflow in Rust}, label={rust:buffer-overflow}]
+fn main() {
+    let mut vec: Vec<u32> = vec![0; 3];
+    println!("Allocato un vettore di 3 interi, indici validi: 0, 1, 2");
+    for i in 0u32..=3u32 {    
+        println!("Memorizzando {} all'indice {}", i * 10, i);
+        vec[i as usize] = i * 10;
+    }
+    println!("Terminata la memorizzazione!");
+}
+\end{lstlisting}
+Il listato~\ref{rust:buffer-overflow} tenta di replicare il comportamento del listato~\ref{c:buffer-overflow}, 
+allocando un vettore di tre interi e successivamente cercando di inizializzarne quattro. 
+In questo caso la compilazione va a buon fine, ma la stampa finale non avviene: il programma genera un \textit{panic} durante l'esecuzione. Questo avviene
+durante l'accesso all'indice \texttt{3}, come mostrato nell'immagine~\ref{rust:buffer-overflow-exec}.
+
+Questo comportamento è dovuto al fatto che il compilatore inserisce controlli di validità sugli indici, i quali vengono eseguiti a runtime.\footnote{Infatti, il compilatore non può sapere a tempo di compilazione quali sarnno gli indice che verranno utilizzati per accedere a un vettore, quindi si limita a inserire controlli sulla loro validità prima degli accessi effettivi.}
+\begin{figure}[htbp]
+\begin{center}
+    \includegraphics[width=.8\textwidth]{c-buffer-overflow-exec}
+    \caption{\textit{Buffer overflow} in C}\label{c:buffer-overflow-exec}
+    \end{center}
+\end{figure}
+\begin{figure}[htbp]
+\begin{center}
+    \includegraphics[width=.8\textwidth]{rust-buffer-overflow-exec}
+    \caption{\textit{Buffer overflow} in Rust}\label{rust:buffer-overflow-exec}
+    \end{center}
+\end{figure}
+
+
+\paragraph{Buffer overread}
+Si consideri il seguente esempio C che genera un errore di \textit{buffer overread}:
+\begin{lstlisting}[language=C, caption={Buffer overread in C}, label={c:buffer-overread}]
+#include <stdlib.h>
+#include <stdio.h>
+int main(void) {
+    int* vec = malloc(sizeof(int) * 3);
+    for(int i = 0; i < 3; i++) vec[i] = i * 10;
+    printf("Contenuto del vettore:\n");
+    for(int i = 0; i < 10; i++)
+        printf("Indice: %d -> Valore: %d\n", i, vec[i]);
+    free(vec);
+    return 0;
+}
+\end{lstlisting}
+Nel listato~\ref{c:buffer-overread} viene allocata memoria per un vettore di tre interi, i quali vengono correttamente inizializzati e, successivamente,
+si tenta di leggere dieci elementi dal vettore.
+In questo caso il programma termina senza errori, stampando effettivamente dieci elementi, come mostrato dall'immagine~\ref{c:buffer-overread-exec}. 
+
+Come quanto detto per l'errore di \textit{buffer overflow}, generalmente la conseguenza è un \textit{undefined behaviour}: 
+non è possibile determinare a priori cosa contenga la memoria (oltre
+il limite dell'allocazione) che viene letta\footnote{Vangono le stesse considerazioni fatte per il \textit{buffer overflow}: un'accesso a un indirizzo
+che eccede lo spazio di indirizzi virtuali del processo genera un errore runtime di tipo \textit{segmentation fault}, causando l'immediato crash del programma}.\hfill
+\vspace{10pt}\\
+\noindent Rust gestisce questo errore in maniera analoga al \textit{buffer overflow}. Si consideri a dimostrazione di ciò il seguente esempio:
+\begin{lstlisting}[language=Rust, caption={Buffer overread in Rust}, label={rust:buffer-overread}]
+fn main() {
+    fn main() {
+    let vec: Vec<u32> = vec![0, 10, 20];
+    println!("Contenuto del vettore:");
+    for i in 0..10 {
+        println!("Indice: {} -> Valore: {}", i, vec[i]);
+    }
+}
+}
+\end{lstlisting}
+Il listato~\ref{rust:buffer-overread} tenta di replicare il comportamento del listato~\ref{c:buffer-overread}, 
+allocando un vettore di tre interi e successivamente cercando di leggerne dieci. 
+
+Anche in questo caso la compilazione termina correttamente ma, durante l'esecuzione, in particolare durante l'accesso al quarto elemento, viene generato
+un \textit{panic}. 
+
+Questo comportamento può essere osservato nell'immagine~\ref{rust:buffer-overread-exec}.
+\begin{figure}[htbp]
+\begin{center}
+    \includegraphics[width=.8\textwidth]{c-buffer-overread-exec}
+    \caption{\textit{Buffer overread} in C}\label{c:buffer-overread-exec}
+    \end{center}
+\end{figure}
+\begin{figure}[htbp]
+\begin{center}
+    \includegraphics[width=.8\textwidth]{rust-buffer-overread-exec}
+    \caption{\textit{Buffer overread} in Rust}\label{rust:buffer-overread-exec}
+    \end{center}
+\end{figure}
 
 % Unitialized memory access
-\subsubsection{Accesso a memoria non inizializzata (\textit{unitialized memory access})} 
-La \textit{unitialized memory access} è un errore che si presenta
+\subsubsection{Unitialized memory access} 
+La \textit{unitialized memory access} (accesso a memoria non inizializzata) è un errore che si presenta
  quando si tenta di leggere da un'area di memoria che non è stata 
  inizializzata. Questo può portare a comportamenti imprevedibili, in quanto 
- i dati letti potrebbero essere casuali o obsoleti, potenzialmente 
+ i dati letti potrebbero essere casuali e potenzialmente 
  residui da allocazioni precedenti.
 
 Nel linguaggio C, questo errore si presenta tipicamente quando viene 
@@ -373,9 +492,9 @@ int main(void) {
 \end{lstlisting}
 Nel listato~\ref{c:uninitialized-memory-access} viene allocata memoria sufficiente a contenere un intero e, senza inizializzarne il contenuto,
 viene tentato un accesso in lettura. 
-Il risultato è un comportamento indefinito: il valore letto potrebbe variare tra diverse esecuzioni o ambienti, senza garanzia di coerenza.
+Il risultato è un comportamento indefinito: il valore letto potrebbe variare in base all'ambiente di esecuzione e tra esecuzioni, senza garanzia di coerenza.
 
-È possibile osservare un caso particolare, in cui l'accesso può sembrare produrre un risultato coerente, come mostrato nell'immagine~\ref{c:uninitialized-memory-access-exec}\footnote{L'esecuzione è avvenuta su Ubuntu LTS con \texttt{glibc}. In questo contesto è possibile che \texttt{malloc} azzeri la memoria allocata, prima di restituirne l'indirizzo, ma non è un comportamento garantito dallo standard C.}.
+È possibile osservare un caso particolare, in cui l'accesso può sembrare produrre un risultato coerente, come mostrato nell'immagine~\ref{c:uninitialized-memory-access-exec}\footnote{L'esecuzione è avvenuta su Ubuntu LTS 24.04 con \texttt{glibc}. In questo contesto è possibile che \texttt{malloc} azzeri la memoria allocata, prima di restituirne l'indirizzo, ma non è un comportamento garantito dallo standard C.}.
 Tuttavia, questa apparente stabilità non può essere considerata una garanzia, in quanto vi sono più fattori che possono influenzare il valore letto:
 \begin{itemize}
     \item Implementazioni specifiche dell'allocatore di memoria, che possono inizializzare la memoria allocata a zero o a un valore casuale;
@@ -397,30 +516,32 @@ int main(void) {
 }
 \end{lstlisting}
 Il listato~\ref{c:uninitialized-memory-access-2} mostra come eseguire una \texttt{free} prima della \texttt{malloc} successiva può lasciare residui nella memoria. 
-Di conseguenza il valore letto, questa volta, è diverso da zero, come si può osservare dall'immagine~\ref{c:uninitialized-memory-access-exec-2}\footnote{Anche in questo caso, si tratta di un comportamento specifico del sistema e non garantito dallo standard}. \hfill
+Di conseguenza il valore letto, questa volta, è diverso da zero, come si può osservare dall'immagine~\ref{c:uninitialized-memory-access-exec-2}\footnote{Anche in questo caso, si tratta di un comportamento specifico del sistema e non garantito dallo standard}.
 \begin{figure}[htbp]
 \begin{center}
-    \includegraphics[width=.8\textwidth]{c-uninitialized-memory-access-exec}
+    \includegraphics[width=.6\textwidth]{c-uninitialized-memory-access-exec}
     \caption{\textit{Uninitialized memory access in C} in C}\label{c:uninitialized-memory-access-exec}
     \end{center}
 \end{figure}
-\begin{figure}[htbp]
-\begin{center}
-    \includegraphics[width=.8\textwidth]{c-uninitialized-memory-access-exec-2}
-    \caption{\textit{Uninitialized memory access in C con previa free} in C}\label{c:uninitialized-memory-access-exec-2}
-    \end{center}
-\end{figure}
-\vspace{10pt}\\
-\noindent Rust previene questa problematica in maniera strutturale, prevenendo gli accessi a memoria non inizializzata grazie al modello di \texttt{ownership} e all'utilizzo di \texttt{smart pointers}, i quali prevedono una inizializzazione obbligatoria.
+Rust previene questa problematica in maniera strutturale, non permettendo allocazioni dinamiche senza inizializzazione grazie all'utilizzo di \texttt{smart pointers}, i quali prevedono un'inizializzazione obbligatoria.
 
 In Rust infatti, le principali primitive per l'allocazione dinamica richiedono sempre l'inizializzazione dei valori:
 \begin{itemize}
-    \item \texttt{Box}: \textit{smart pointer} impiegato per allocare un singolo valore nella heap. L'unico modo per crearne uno è tramite \texttt{Box::new}, che richiede un valore per l'inizializzazione. In safe Rust, non esiste un costrutto equivalente alla \texttt{malloc} in C;\ 
-    \item \texttt{Vec}: utilizzato per una collezione dinamica di valori in heap. Anche se può essere creato vuoto (\texttt{Vec::new}), ogni accesso è verificato a runtime per evitare accessi oltre i limiti. In caso di violazioni viene generato un \texttt{panic}, terminando l'esecuzione, come è osservabile nell'immagine [mettere sopra];
+    \item \texttt{Box}: \textit{smart pointer} impiegato per allocare un singolo valore nella heap. L'unico modo per crearne uno è tramite \texttt{Box::new}, che richiede un valore per l'inizializzazione. In \textit{safe} Rust, non esiste un costrutto equivalente alla \texttt{malloc} in C;\ 
+    \item \texttt{Vec}: \textit{smart pointer} utilizzato per una collezione dinamica di valori in heap. Anche se può essere creato vuoto (\texttt{Vec::new}), ogni accesso è verificato a runtime per evitare accessi oltre i limiti. In caso di violazioni viene generato un \texttt{panic}, terminando l'esecuzione, come è osservabile nell'immagine [mettere sopra];
 \end{itemize}
-Di conseguenza, non è possibile sviluppare codice Rust che acceda a memoria non inizializzata senza ricorrere alla parola chiave \texttt{unsafe}\footnote{Rust consenge l'accesso a memoria potenzialmente non inizializzata, ma soltanto all'interno di blocchi \textit{unsafe}. Un esempio è la funzione \texttt{std::mem::MaybeUninit}, ma meccanismi come questo sono riservati a casi particolari, in cui le garanzie di sicurezza devono essere gestite manualmente dal programmatore.}.
+Di conseguenza, non è possibile sviluppare codice Rust che acceda a memoria non inizializzata senza ricorrere alla parola chiave \texttt{unsafe}\footnote{Rust consente l'accesso a memoria potenzialmente non inizializzata, ma soltanto all'interno di blocchi \textit{unsafe}. Un esempio è la funzione \texttt{std::mem::MaybeUninit}, ma meccanismi come questo sono riservati a casi particolari, in cui le garanzie di sicurezza devono essere gestite manualmente dal programmatore.}.
+\begin{figure}[htbp]
+\begin{center}
+    \includegraphics[width=.6\textwidth]{c-uninitialized-memory-access-exec-2}
+    \caption{\textit{Uninitialized memory access in C con previa free} in C}\label{c:uninitialized-memory-access-exec-2}
+    \end{center}
+\end{figure}
 
-
+\subsubsection{Sicurezza della memoria: conclusioni}
+In conclusione, sotto l'aspetto della sicurezza della memoria, Rust si distingue da C garantendo un comportamento sicuro e deterministico, prevenendo
+alcuni errori durante la compilazione e rilevandone altri a runtime. In C, d'altra parte, tali errori possono passare inosservati, causando
+\textit{undefined behaviour} o crash del programma.
 
 
 \subsection{Prestazioni}
