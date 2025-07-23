@@ -134,7 +134,9 @@ siano validi. \hfill
 \vspace{12pt}\\
 \noindent La \textit{best practice} riguardante i blocchi non sicuri prevede di ridurre il codice non sicuro il più possibile, utilizzandolo solo quando stretto necessario.
 Inoltre, è preferito incapsulare il codice non sicuro all'interno di un'astrazione sicura, fornendo una API sicura per il suo utilizzo. \hfill
+
 \subsection{Gestione delle risorse}
+
 \subsection{Sicurezza della memoria}
 In questa sottosezione verranno analizzati alcuni tra gli errori più comuni legati alla gestione della memoria,
 mostrando esempi di codice scritti in C e confrontandoli, quando possibile, con le controparti in Rust.
@@ -520,7 +522,7 @@ Di conseguenza il valore letto, questa volta, è diverso da zero, come si può o
 \begin{figure}[htbp]
 \begin{center}
     \includegraphics[width=.6\textwidth]{c-uninitialized-memory-access-exec}
-    \caption{\textit{Uninitialized memory access in C} in C}\label{c:uninitialized-memory-access-exec}
+    \caption{\textit{Uninitialized memory access} in C}\label{c:uninitialized-memory-access-exec}
     \end{center}
 \end{figure}
 Rust previene questa problematica in maniera strutturale, non permettendo allocazioni dinamiche senza inizializzazione grazie all'utilizzo di \texttt{smart pointers}, i quali prevedono un'inizializzazione obbligatoria.
@@ -534,7 +536,7 @@ Di conseguenza, non è possibile sviluppare codice Rust che acceda a memoria non
 \begin{figure}[htbp]
 \begin{center}
     \includegraphics[width=.6\textwidth]{c-uninitialized-memory-access-exec-2}
-    \caption{\textit{Uninitialized memory access in C con previa free} in C}\label{c:uninitialized-memory-access-exec-2}
+    \caption{\textit{Uninitialized memory access} in C con previa \texttt{free}}\label{c:uninitialized-memory-access-exec-2}
     \end{center}
 \end{figure}
 
@@ -543,6 +545,118 @@ In conclusione, sotto l'aspetto della sicurezza della memoria, Rust si distingue
 alcuni errori durante la compilazione e rilevandone altri a runtime. In C, d'altra parte, tali errori possono passare inosservati, causando
 \textit{undefined behaviour} o crash del programma.
 
-
 \subsection{Prestazioni}
+
 \subsection{Complessità del codice}
+Una critica comune nei confronti di Rust, specialmente da coloro che provengono da C, è la maggiore complessità e verbosità del linguaggio.
+Generalmente, la sintassi di C è considerata più semplice e minimale, principalmente per la sua natura a basso livello, la mancanza di astrazioni
+complesse e la presenza di un numero limitato di costrutti.
+
+Al contrario in Rust, dovendo gestire attentamente le relazioni di ownership, borrowing e lifetime, il codice può risultare più complesso; 
+questi non sono gli unici aspetti che contribuiscono a questa percezione: gestione degli errori, controllo del flusso, tipicizzazione generica e \textit{macro} sono
+tutti elementi che possono rendere il linguaggio più verboso e complesso rispetto a C.
+
+\subsubsection{Annotazioni di lifetime}
+
+\subsubsection{Gestione degli errori}
+
+\subsubsection{Controllo del flusso}
+
+\subsubsection{Tipicizzazione generica}
+
+\paragraph{Macro}
+I due linguaggi gestiscono le \textit{macro} in maniera completamente differente.
+Come riportato dalla documentazione GCC\cite{GNU-online-docs}, le \textit{macro} in C sono frammenti di codice a cui viene associato un nome, dichiarate con la direttiva \texttt{\#define}. 
+
+Durante la fase di pre-processamento (prima della compilazione),
+quando viene incontrato il nome di una \textit{macro} , esso viene sostituito con il codice associato. Si tratta di una semplice sostituzione testuale, come
+mostrato nel seguente esempio:
+\begin{lstlisting}[language=C, caption={Definizione di \textit{macro} in C}, label={c:macro}]
+#define printline(x) printf("%s\n", x)
+int main(void) {
+    printline("Stampa di prova");
+    return 0;
+}
+\end{lstlisting}
+Nel listato~\ref{c:macro}, viene definita la \textit{macro} \texttt{printline}, che stampa la stringa \texttt{x}, andando a capo successivamente.
+All'interno della funzione main viene invocata `\texttt{printline("Stampa di prova")}': questa sarà espansa in `\texttt{printf("\%s\textbackslash n", "Stampa di prova")}' dal pre-processore. 
+
+In quanto la sostituzione avviene durante la fase di pre-processamento,
+per osservare il codice generato è necessario utilizzare il flag \texttt{-E} durante la compilazione con
+ \texttt{GCC}\footnote{Tramite la opzione \texttt{-E} viene indicato a \texttt{GCC} di fermarsi dopo la fase di pre-processamento, 
+ senza effettuare la compilazione. L'output della fase di pre-processamento verrà poi indirizzato allo standard output.}, 
+ come mostrato nell'immagine~\ref{c:macro-preprocess}. \hfill
+\begin{figure}[htbp]
+    \begin{center}
+        \includegraphics[width=.6\textwidth]{c-macro-preprocess}
+        \caption{Traduzione di una \textit{macro} in C}\label{c:macro-preprocess}
+    \end{center}
+\end{figure}
+\vspace{10pt}\\
+\noindent In Rust le \textit{macro} si distinguono in due classi: dichiarative e procedurali. Le \textit{macro} procedurali sono molto complesse e richiederebbero un capitolo
+a parte, ma andrebbe oltre l'ambito di questa trattazione. 
+
+Le \textit{macro} dichiarative, pur essendo meno complesse rispetto a quelle procedurali, sono caratterizzate comunque da una sintassi particolare,
+basata su \textit{match di pattern}, permettendo
+perfino l'\textit{overloading} in base al \textit{pattern} come riportato dalla documentazione ufficiale\cite{rust-book}. 
+Anche queste richiederebbero un capitolo 
+dedicato per una spiegazione sufficientemente dettagliata. \hfill
+\vspace{9pt}\\
+\noindent Per mostrare la maggiore complessità, e differente gestione, delle \textit{macro} Rust rispetto alla controparte C, è sufficiente un esempio rappresentativo\footnote{L'esempio fornito è basato su quello riportato nella documentazione ufficiale\cite{rust-book}, nella pagina relativa all'overloading di macro.}:
+\begin{lstlisting}[language=Rust, caption={Definizione di \textit{macro} dichiarativa in Rust}, label={rust:macro}]
+macro_rules! comp_eval {
+    ($sx:expr; and $dx:expr) => {
+        println!(
+            "{:?} and {:?} is {:?}",
+            stringify!($sx), stringify!($dx), $sx && $dx
+        )
+    };
+    ($sx:expr; or $dx:expr) => {
+        println!(
+            "{:?} or {:?} is {:?}",
+            stringify!($sx), stringify!($dx), $sx || $dx
+        )
+    };
+    ($not:expr) => {
+        println!(
+            "not {:?} is {:?}",
+            stringify!($not), !($not)
+        )
+    };
+}
+fn main() {
+    comp_eval!(1 + 2 == 3; and true);
+    comp_eval!(true; or false);
+    comp_eval!(true);
+}
+\end{lstlisting}
+Nel listato~\ref{rust:macro} è definita la \textit{macro} dichiarativa \texttt{comp\_eval} che, in base al pattern, espande un codice diverso:
+\begin{itemize}
+    \item Se viene fornita una coppia di espressioni, \texttt{\$sx} e \texttt{\$dx}, separate dalla parola chiave \texttt{and}, la \textit{macro} espande una stampa della loro congiunzione logica;
+    \item Se le espressioni sono separate dalla parola chiave \texttt{or}, espande una stampa della loro disgiunzione logica;
+    \item Se invece viene fornita una singola espressione, \texttt{\$not}, la \textit{macro} espande una stampa della sua negazione logica.
+\end{itemize}
+Il risultato dell'esecuzione di questo codice è osservabile nell'immagine~\ref{rust:correct-macro}. \hfill
+\vspace{0pt}\\
+\noindent Le \textit{macro} Rust rappresentano uno strumento molto potente rispetto alle direttive pre-processore di C:\  permettono di definire comportamenti 
+differenti in base alla struttura dell'invocazione, cosa non
+possibile con la semplice sostituzione testuale.
+
+Un'altra differenza rispetto alle \textit{macro} C riguarda la loro espansione: le \textit{macro} in Rust vengono espanse a livello di compilazione e in caso di mancata
+corrispondenza con qualsiasi \textit{pattern} previsto viene generato un errore di compilazione.
+
+Ad esempio, aggiungendo l'invocazione `\texttt{comp\_eval!("test")}' all'interno della funzione \texttt{main} nel listato~\ref{rust:macro}, si otterrà un errore
+durante la compilazione in quanto il \texttt{pattern} fornito non corrisponde a nessuna delle regole definite nella macro\footnote{In questo esempio il pattern fornito è una singola stringa, quindi la regola adeguata sarebbe la terza, che accetta un'unica espressione. Tuttavia, l'operatore di negazione logica non può essere applicato a una stringa, di conseguenza il compilatore rifiuta il codice, generando un errore.}.
+Il messaggio di errore è osservabile nell'immagine~\ref{rust:incorrect-macro}.
+\begin{figure}[htbp]
+    \begin{center}
+        \includegraphics[width=.8\textwidth]{rust-correct-macro}
+        \caption{Compilazione di una \textit{macro} in Rust}\label{rust:correct-macro}
+    \end{center}
+\end{figure}
+\begin{figure}[htbp]
+    \begin{center}
+        \includegraphics[width=.8\textwidth]{rust-incorrect-macro}
+        \caption{Errore durante la compilazione di una \textit{macro} in Rust}\label{rust:incorrect-macro}
+    \end{center}
+\end{figure}
