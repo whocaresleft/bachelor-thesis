@@ -136,8 +136,161 @@ siano validi. \hfill
 Inoltre, è preferito incapsulare il codice non sicuro all'interno di un'astrazione sicura, fornendo una API sicura per il suo utilizzo. \hfill
 
 \subsection{Gestione delle risorse}
+In questa sottosezione verranno analizzati e confrontati i meccanismi offerti da C e Rust per la gestione delle risorse. In particolare
+verrà analizzata la gestione di: memoria dinamica, file su disco, risorse di rete e thread con risorse condivise\footnote{Gli esempi di codice riportati in questa sottosezione sono stati sviluppati su ambiente Linux con \texttt{glibc}}.
 
-\subsection{Sicurezza della memoria}
+\subsubsection{Memoria dinamica}
+Oltre al \textit{modello di ownership}, Rust incapsula la gestione della memoria dinamica tramite astrazioni note come \textit{smart pointers}, con lo scopo
+di evitare problematiche comuni relative all'allocazione e deallocazione manuali della memoria. In questa sezione 
+verranno trattati solamente i meccanismi di base
+per l'allocazione, 
+l'accesso e la liberazione della memoria. L'analisi dettagliata degli errori comuni sarà il fulcro della sottosezione successiva: \textit{Sicurezza della memoria}~\ref{sub:mem-safe}. \hfill
+\vspace{10pt}\\
+\noindent In C, la libreria standard (\texttt{stdlib.h}) fornisce primitive per la gestione manuale della memoria: \texttt{malloc} e \texttt{calloc} per l'allocazione, \texttt{realloc} per ridimensionamento e \texttt{free} per la deallocazione.
+Entrambe \texttt{malloc} e \texttt{calloc} richiedono come argomento la quantità di memoria da allocare, espressa in byte. 
+
+Se l'allocazione ha successo, restituiscono un puntatore all'area di memoria allocata, altrimenti restituiscono \texttt{NULL}.\ 
+Tuttavia, il controllo dell'esito è lasciato al programmatore, che deve verificare esplicitamente se il puntatore restituito è valido o meno. 
+Nella pratica spesso questa verifica viene omessa, con potenziali gravi conseguenze.
+
+Analogamente, \texttt{free} si limita a tentare la deallocazione dell'indirizzo fornito, ma non restituisce nessun esito; inoltre, se viene invocata più volte sullo stesso puntatore, può generare un errore noto come \textit{double free}. \hfill
+\vspace{0pt}\\
+\noindent Rust adotta un approccio diverso, basato su \texttt{smart pointers} come \texttt{Box<T>} o \texttt{Vec<T>}, che incapsulano i valori memorizzati nell'heap e ne gestiscono automaticamente il ciclo di vita.
+Queste astrazioni si fondano sul pattern \textit{RAII}, unendo le operazioni di allocazione e inizializzazione per evitare l'accesso a valori non inizializzati. \hfill
+\vspace{10pt}\\
+\noindent Si considerino i seguenti esempi C e Rust che mostrano la gestione del completo ciclo di vita (allocazione, inizializzazione, accesso e deallocazione) di un intero nella heap:
+\begin{lstlisting}[language=C, caption={Gestione ciclo di vita in memoria dinamica C}, label={c:mem-handle}]
+#include <stdlib.h>
+#include <stdio.h>
+int main(void) {
+
+    int* value = malloc(sizeof(int)); // Allocation
+    if(value == NULL) return -1;
+
+    *value = 52; // Initialization
+
+    printf("%d\n", *value); // Access
+
+    free(value);    // Deallocation
+
+    return 0;
+}
+
+\end{lstlisting}
+\begin{lstlisting}[language=Rust, caption={Gestione ciclo di vita in memoria dinamica Rust}, label={rust:mem-handle}]
+fn main() {
+
+    let value = Box::<i32>::new(52); // RAII: Resource Allocation Is Initialization
+
+    println!("{}", *value); // Access
+
+} // <-- End of scope: automatic deallocation
+\end{lstlisting}
+Entrambi i listati~\ref{c:mem-handle} e~\ref{rust:mem-handle} implementano la stessa logica: viene allocato spazio sufficiente per un intero
+nella memoria heap, successivamente viene inizializzato, stampato e infine deallocato.
+
+Nel caso di C, le varie fasi sono distinte e scollegate: l'allocazione tramite \texttt{malloc}, l'inizializzazione e l'accesso tramite dereferenziazione e la deallocazione tramite \texttt{free}.
+Inoltre, è responsabilità del programmatore specificare la dimensione corretta della memoria da allocare, in questo caso tramite \texttt{sizeof(int)}. Tuttavia, non vi sono controlli per confermare
+che la dimensione inserita sia sufficiente o meno, rischiando di generare errori durante l'esecuzione.
+
+Rust, al contrario, segue il paradigma \textit{RAII}:\  la fase di allocazione e di inizializzazione sono unificate nella creazione dello \textit{smart pointer} (\texttt{Box::new}). La deallocazione 
+avviene automaticamente al termine dello scope, prevenendo sia la mancata, che la doppia, liberazione. L'unico aspetto simile rispetto a C è l'accesso, gestito tramite dereference.
+
+\subsubsection{File}
+
+
+\subsubsection{Socket}
+Entrambi i linguaggi mettono a disposizione strumenti per lo sviluppo di applicazioni di rete, in particolare per 
+la comunicazione orientata alla connessione (e.g. socket TCP). \hfill
+\vspace{8pt}\\
+\noindent Nel linguaggio C, l'interfaccia di programmazione di rete è fornita principalmente dalle librerie di sistema \texttt{POSIX}:\ 
+\begin{itemize}
+    \item \texttt{socket}: creazione di un socket;
+    \item \texttt{bind}: associazione di un indirizzo IP e porta;
+    \item \texttt{listen}: messa in ascolto in attesa di connessioni;
+    \item \texttt{accept}: accettazione di una connessione in arrivo;
+    \item \texttt{write}: invio di dati sulla socket;
+    \item \texttt{read}: ricezione di dati dalla socket;
+    \item \texttt{close}: chiusura del socket;
+\end{itemize}
+Questa interfaccia, sebbene molto flessibile, è soggetta a errori comuni, principalmente dovuti alla gestione manuale dei file descriptor e alla mancata verifica dell'esito delle operazioni. \hfill
+\vspace{8pt}\\
+\noindent Rust, invece, fornisce un'interfaccia di alto livello tramite il modulo \texttt{std::net},
+che incapsula i socket TCP in due strutture: \texttt{TcpListener} per il lato server e \texttt{TcpStream} per il lato client.
+Le principali operazioni sono:
+\begin{itemize}
+    \item \texttt{TcpListener::bind}: unisce la creazione del socket, il bind e la messa in ascolto;
+    \item \texttt{TcpListener::accept}: accetta una connessione in ingresso e restituisce un \texttt{TcpStream};
+    \item \texttt{TcpStream::connect}: si connette a un \texttt{TcpListener};
+    \item \texttt{TcpStream::read}: riceve dati dal socket, implementando il Trait \texttt{Read};
+    \item \texttt{TcpStream::write}: invia dati sul socket, implementando il Trait \texttt{Write}.
+\end{itemize}
+Queste astrazioni integrano la gestione degli errori avvalendosi del tipo \texttt{Result<T, E>}, obbligando
+il programmatore a gestire esplicitamente sia il caso di successo che quello di fallimento di un'operazione. \hfill
+\vspace{8pt} \\
+\noindent I listati~\ref{c:tcp-serv} e~\ref{rust:tcp-serv} mostrano la realizzazione di un server TCP in entrambi i linguaggi. 
+La logica implementata è la stessa per entrambi: il server si mette in ascolto sulla porta \texttt{50000}, accetta una connessione in ingresso, legge fino a \texttt{1024} byte dal socket 
+e infine scrive, sempre su quest'ultimo, i dati ricevuti.
+
+Nel listato~\ref{c:tcp-serv} i controllo sugli errori sono stati omessi per evitare un'eccessiva complessità strutturale e facilitare la lettura, al fine di focalizzare l'attenzione sul
+flusso logico di una connessione TCP.\ 
+
+Per lo stesso motivo, e per mantenere una somiglianza strutturale con l'esempio precedente, nel listato~\ref{rust:tcp-serv} gli errori non
+vengono gestiti esplicitamente, ma vengono propagati al chiamante tramite l'operatore \texttt{?}.\hfill 
+\vspace{8pt}\\
+\noindent A differenza di C, in cui la gestione degli errori viene lasciata alla discrezione del programmatore, Rust promuove un approccio più sicuro, tramite
+il tipo \texttt{Result} e l'operatore \texttt{?}. Questi meccanismi garantiscono la gestione dell'errore a livello di compilazione: il compilatore controlla che entrambi gli scenari (successo e fallimento) vengano
+gestiti esplicitamente oppure che l'errore venga propagato al chiamante tramite \texttt{?}, prevenendo scenari di \textit{undefined behaviour}.
+\begin{lstlisting}[language=C, float, caption={Semplice server TCP in C}, label={c:tcp-serv}]
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <stdio.h>
+int main(void) {
+
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    struct sockaddr_in addr = {
+        .sin_family = AF_INET,
+        .sin_port = htons(50000),
+        sin_addr.s_addr = INADDR_ANY
+    };
+    bind(fd, (struct sockaddr*)&addr, sizeof(addr));
+
+    listen(fd, 1);
+
+    int client_fd = accept(fd, NULL, NULL);
+
+    char buf[1024];
+    ssize_t read_byte = read(client_fd, buf, sizeof(buf));
+    write(client_fd, buf, read_byte);
+
+    close(client_fd);
+    close(fd);
+    return 0;
+}
+\end{lstlisting}
+\begin{lstlisting}[language=Rust, float, caption={Semplice server TCP in Rust}, label={rust:tcp-serv}]
+use std::net::{TcpListener, TcpStream};
+use std::io::{Read, Write};
+fn main() -> std::io::Resilt<()> {
+
+    let server = TcpListener::bind("0.0.0.0:50000")?;
+    
+    let (mut client, _) = server.accept()?;
+
+    let mut buffer = [0; 1024];
+    let n = client.read(&mut buffer)?;
+
+    client.write(&buffer[..n])?;
+
+    Ok(())
+}
+\end{lstlisting}
+
+\subsubsection{Thread}
+
+\subsection{Sicurezza della memoria}\label{sub:mem-safe}
 In questa sottosezione verranno analizzati alcuni tra gli errori più comuni legati alla gestione della memoria,
 mostrando esempi di codice scritti in C e confrontandoli, quando possibile, con le controparti in Rust.
 
@@ -540,7 +693,7 @@ Di conseguenza, non è possibile sviluppare codice Rust che acceda a memoria non
     \end{center}
 \end{figure}
 
-\subsubsection{Sicurezza della memoria: conclusioni}
+\subsubsection{Conclusioni}
 In conclusione, sotto l'aspetto della sicurezza della memoria, Rust si distingue da C garantendo un comportamento sicuro e deterministico, prevenendo
 alcuni errori durante la compilazione e rilevandone altri a runtime. In C, d'altra parte, tali errori possono passare inosservati, causando
 \textit{undefined behaviour} o crash del programma.
@@ -556,9 +709,81 @@ Al contrario in Rust, dovendo gestire attentamente le relazioni di \textit{owner
 questi non sono gli unici aspetti che contribuiscono a questa percezione: gestione degli errori, controllo del flusso, supporto a \textit{generics} e \textit{macro} sono
 tutti elementi che possono rendere il linguaggio più verboso e complesso rispetto a C.
 
-\paragraph{Annotazioni di lifetime}
+\subsubsection{Annotazioni di lifetime}
+Una delle principali differenze tra Rust e C è dovuta alla presenza del \textit{modello di ownership}, che impone annotazioni di \textit{lifetime} nei casi in cui non siano deducibili implicitamente.
+Come già accennato nel capitolo~\ref{cap:03}, queste permettono al \textit{Borrow Checker} di determinare la validità di un prestito nel tempo, rifiutando 
+codice che viola le annotazioni.
 
-\paragraph{Generics}
+Queste annotazioni introducono un livello ulteriore di complessità, sia sintattica che contettuale: il programmatore deve specificare quanto a lungo
+un riferimento sarà valido, dovendo ragionare in termini di durata dei dati nel tempo.
+
+Tuttavia, la complessità viene compensata da una maggiore sicurezza del codice: come verrà mostrato successivamente, permette di prevenire
+problemi quali access after free. \hfill
+\vspace{10pt} \\
+\noindent In C questo meccanismo non è presente, non esiste proprio il concetto di \textit{lifetime} come elemento del linguaggio. In questi
+casi è il programmatore che deve garantire che i puntatori siano validi, senza supporto da parte del linguaggio.
+
+Di seguito verranno riportati due esempi che mostrano come le annotazioni di \textit{lifetime} possano prevenire problematiche quali \textit{access after free}:
+\begin{lstlisting}[language=Rust, caption={Prevenzione di \textit{access after free} tramite \textit{lifetime annotations}}, label={rust:lifetime-prevention}]
+fn biggest<'a>(a: &'a i32, b: &'a i32) -> &'a i32 {
+    if *a > *b { a } else { b }
+}
+fn main (){
+    let result;
+    let smaller = Box::<i32>::new(1);
+    {
+        let bigger = Box::<i32>::new(2);
+        result = biggest(&*smaller, &*bigger);
+    }
+    println!("Il piu grande e: {}", *result);
+}
+\end{lstlisting}
+\begin{lstlisting}[language=C, caption={\textit{Access after free} dovuta alla mancanza di \textit{lifetime} in C}, label={c:lifetime-prevention}]
+#include <stdlib.h>
+#include <stdio.h>
+int* biggest(int* a, int* b) {
+    return (*a > *b) ? a : b;
+}
+int main(void) {
+    int* result;
+    int* smaller = malloc(sizeof(int));
+    *smaller = 1;
+    {
+        int* bigger = malloc(sizeof(int));
+        *bigger = 2;
+        result = biggest(smaller, bigger);
+        free(bigger);
+    }
+    printf("Il piu grande e: %d\n", *result);
+    free(smaller);
+}
+\end{lstlisting}
+Entrambi i listati,~\ref{rust:lifetime-prevention} e~\ref{c:lifetime-prevention}, implementano la stessa logica: definiscono una funzione \texttt{biggest} che
+riceve in ingresso due riferimenti (o puntatori, nel caso di C) e restituisce quello che punta al valore maggiore.
+La funzione \texttt{main} alloca due interi, \texttt{smaller} e \texttt{bigger}, nella heap e passa un riferimento a ciascuno a 
+\texttt{biggest}.
+Per come sono inizializzati, la funzione restituisce un rifermento a \texttt{bigger}. Tuttavia, \texttt{bigger} viene deallocato prima della stampa, lasciando un \textit{dangling pointer}.
+
+Qua è possibile osservare la differenza tra i due linguaggi:
+\begin{itemize}
+    \item In C, il compilatore produce un eseguibile senza generare alcun avviso o errore. L'esecuzione sembra funzionare, ma in realtà viene generato un \textit{access after free}, leggendo un valore corrotto, come illustrato nell'immagine~\ref{c:aaf-lifetime};
+    \item In Rust, invece, \texttt{biggest} specifica una sola \textit{lifetime}, \texttt{'a}, indicando che tutte le reference (le due in ingresso e quella in uscita) devono essere valide per la durata di tale \textit{lifetime}. Il \textit{Borrow Checker} rileva che \texttt{smaller} e \texttt{bigger}, essendo definiti in scope differenti, hanno \textit{lifetime} diverse e impedisce la compilazione. È possibile osservare questo comportamento nell'immagine~\ref{rust:aaf-lifetime}.
+\end{itemize}
+\begin{figure}[htbp]
+    \begin{center}
+        \includegraphics[width=.9\textwidth]{c-aaf-lifetime}
+        \caption{\textit{Access after free} dovuto all'assenza di \textit{lifetime} in C}\label{c:aaf-lifetime}
+    \end{center}
+\end{figure}
+\begin{figure}[htbp]
+    \begin{center}
+        \includegraphics[width=.9\textwidth]{rust-aaf-lifetime}
+        \caption{Prevenzione di {access after free} grazie alle \textit{lifetime} Rust}\label{rust:aaf-lifetime}
+    \end{center}
+\end{figure}
+Questo è un esempio che mostra come Rust, tramite le annotazioni di \textit{lifetime}, presenti una sintassi più complessa rispetto a C, ma allo stesso tempo più sicura.
+
+\subsubsection{Generics}
 Le espressioni \textit{generics} o \textit{generic programming} indicano un meccanismo di astrazione che consente di sviluppare codice indipendente da un tipo di dato specifico.
 Il tipo viene fornito come argomento, generalmente in fase di compilazione, consentendo il riuso del codice con diversi tipi di dato. \hfill
 \vspace{8pt}\\
@@ -569,7 +794,7 @@ Questo meccanismo, per quanto flessibile, richiede controlli rigorosi da parte d
     \item un puntatore \texttt{void*} non memorizza informazioni sulla dimensione del valore puntato, rendendo necessaria la conoscenza esplicita del tipo (solitamente memorizzandone la dimensione);
     \item le operazioni di accesso, sia in lettura che scrittura, devono essere effettuate tramite funzioni delicate come \texttt{memcpy}, in quanto non è possibile dereferenziare direttamente un puntatore \texttt{void*}.
 \end{itemize}
-Il listato~\ref{c:generics} riporta un'estratto da un'implementazione in C di un nodo di una lista generica. L'implementazione completa è disponibile sulla piattaforma Github\footnote{Disponibile nel repository, \texttt{C-data-structures}, personale del candidato, seguendo il percorso: \texttt{src/linear/}. Alcuni commenti sono stati rimossi o spostati per ragioni di spazio.}.
+Il listato~\ref{c:generics} riporta un'estratto da un'implementazione in C di un nodo di una lista generica. L'implementazione completa è disponibile sulla piattaforma Github\cite{github-ds-repo}\footnote{Disponibile nel repository, \texttt{C-data-structures}, personale del candidato, seguendo il percorso: \texttt{src/linear/}. Alcuni commenti sono stati rimossi o spostati per ragioni di spazio.}.
 \begin{lstlisting}[language=C, float, caption={Programmazione generica in C}, label={c:generics}]
 typedef struct clinkedlist {
 	node* tail;
@@ -644,9 +869,7 @@ impl<T> Node<T> {
 L'implementazione risulta più semplice rispetto alla controparte C:\ non è necessario gestire manualmente la dimensione dei valori o gli accessi diretti alla memoria.
 A tal proposito, si consideri che \texttt{Node::<T>::new()} del listato~\ref{rust:generics} è l'equivalente di \texttt{node\_create} del listato~\ref{c:generics}.
 
-\paragraph{Controllo del flusso}
-
-\paragraph{Gestione degli errori}
+\subsubsection{Gestione degli errori}
 I due linguaggi si distinguono per i meccanismi impiegati per la gestione degli errori.
 In C, tipicamente, tale gestione è opzionale: il linguaggio non impone alcun controllo esplicito, lasciando la responsabilità al programmatore.
 Il meccanismo maggiormente diffuso per segnalare errori è basato sul valore di ritorno, tipicamente interi, da parte delle funzioni, secondo
@@ -676,7 +899,7 @@ A differenza del C, la gestione esplicita degli errori è obbligatoria in Rust: 
 compilatore impone al programmatore di gestire esplicitamente entrambe le varianti (\texttt{Ok} ed \texttt{Err}) tramite costrutti come \texttt{match} e \texttt{if let} oppure operatori come \texttt{?}, il quale propaga l'errore. 
 Questo obbligo riduce la probabilità di errori non gestiti, rendendo il codice più sicuro e robusto rispetto all'approccio tradizionale di C.
 
-\paragraph{Macro}
+\subsubsection{Macro}
 I due linguaggi gestiscono le \textit{macro} in maniera completamente differente.
 Come riportato dalla documentazione GCC\cite{GNU-online-docs}, le \textit{macro} in C sono frammenti di codice a cui viene associato un nome, dichiarate con la direttiva \texttt{\#define}. 
 
@@ -794,3 +1017,7 @@ Il messaggio di errore è osservabile nell'immagine~\ref{rust:incorrect-macro}.
         \caption{Errore durante la compilazione di una \textit{macro} in Rust}\label{rust:incorrect-macro}
     \end{center}
 \end{figure}
+
+\subsubsection{Conclusioni}
+Nonostante siano limitati, gli aspetti esaminati mettono in luce un tratto distintivo di Rust, specialmente rispetto a C:\ il linguaggio
+accetta una complessità maggiore a livello di sintassi per offrire meccanismi di sicurezza integrati e affidabili.

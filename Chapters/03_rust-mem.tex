@@ -12,7 +12,7 @@ Il primo concetto alla base del modello di Ownership di Rust è l'\textit{owners
 
 Si consideri, come esempio, la seguente assegnazione: \texttt{a = 5}.
 Nella maggior parte dei linguaggi di programmazione, l'istruzione verrebbe interpretata come `\textit{a vale 5}'. In Rust il significato è diverso: `\textit{a possiede il valore 5}' o `\textit{a è il proprietario di 5}'. \\
-\indent Stabilire i proprietari è fondamentale per implementare un meccanismo di deallocazione della memoria deterministico e prevedibile: chi libera la memoria relativa a un determinato valore? Il suo proprietario. \break \break
+\indent Stabilire i proprietari è fondamentale per implementare un meccanismo di deallocazione della memoria deterministico e prevedibile: chi libera la memoria relativa a un determinato valore? Il suo proprietario. \hfill
 \noindent Le regole di \textit{ownership}, quindi, stabiliscono i vincoli sui legami tra valori e proprietari. Esse sono tre:
 \begin{itemize}
     \item Ogni valore ha un proprietario (owner);
@@ -59,7 +59,7 @@ fn main() {
 Nel listato~\ref{ownership:copy-example} si osserva che \texttt{x} resta valido dopo l'assegnamento, poiché \texttt{i32} implementa \texttt{Copy}, trattandosi di un tipo semplice, allocato nello stack.
 
 Nel listato~\ref{ownership:move-example}, invece, l'assegnamento provoca il trasferimento dell'ownership, che viene trasferita a \texttt{y}, invalidando \texttt{x}. \texttt{String} è infatti un tipo complesso, allocato nell'heap, che non implementa \texttt{Copy} ma utilizza il comportamento di \texttt{Move} per impostazione predefinita. \hfill
-\break\break
+\vspace{10pt}\\
 \noindent Come visto nel listato~\ref{ownership:move-example}, l'assegnamento di un tipo complesso trasferisce l'ownership, rendendo invalido il riferimento originale. Questo comportamento, tuttavia, può risultare limitante in alcuni scenari.
 
 Per ovviare a tale limitazione, Rust fornisce un meccanismo per effettuare copie profonde anche con tipi che utilizzano \texttt{Move}: il tratto \texttt{Clone}\footnote{La clonazione può introdurre costi in temini di prestazioni, in quanto richiede operazioni di lettura e scrittura nella memoria Heap.}.
@@ -74,9 +74,8 @@ fn main() {
     println!("x: {}, y: {}", x, y); // Entrambi i riferimenti sono validi
 }
 \end{lstlisting}
-Nel listato~\ref{ownership:clone-example} si osserva che sia \texttt{x} che \texttt{y} sono validi in seguito all'assegnamento, in quanto la chiamata a \texttt{clone()} ha generato una nuova stringa, con lo stesso contenuto, ma indipendente dalla prima. \hfill \break
-
-% Introduzione di assegnamento ai parametri
+Nel listato~\ref{ownership:clone-example} si osserva che sia \texttt{x} che \texttt{y} sono validi in seguito all'assegnamento, in quanto la chiamata a \texttt{clone()} ha generato una nuova stringa, con lo stesso contenuto, ma indipendente dalla prima. \hfill
+\vspace{10pt}\\
 \noindent Un'ulteriore limitazione del meccanismo di \textit{ownership} si presenta durante l'invocazione di una funzione, in particolare, nel passaggio di un valore come parametro.
 Rust gestisce il passaggio di un parametro a una funzione in maniera analoga agli assegnamenti: le stesse regole di \texttt{Copy} e \texttt{Move} continuano ad applicarsi.
 
@@ -104,8 +103,8 @@ Dopo l'\textit{ownership}, il secondo concetto fondamentale su cui si fonda il m
 
 Rust implementa concretamente il \textit{borrowing} tramite il concetto di \textit{reference}. Una \textit{reference} può essere vista come un puntatore: rappresenta un indirizzo che può essere seguito per accedere al valore memorizzato a tale indirizzo; tale valore appartiene a un'altra variabile.
 \break  \break
-\noindent In generale, le variabili in Rust, sia di tipo primitivo che reference, sono immutabili per default: non possono essere modificate una volta assegnato un valore. Tramite la parola chiave \texttt{mut}, è possibile ottenere una variabile (o una reference) modificabile. \hfill \break
-
+\noindent In generale, le variabili in Rust, sia di tipo primitivo che reference, sono immutabili per default: non possono essere modificate una volta assegnato un valore. Tramite la parola chiave \texttt{mut}, è possibile ottenere una variabile (o una reference) modificabile. \hfill
+\vspace{10pt}\\
 \noindent Il meccanismo che si occupa di controllare che le regole di \textit{borrowing} vengano rispettate è noto come \textit{Borrow Checker}. Le regole di \textit{borrowing} sono le seguenti:
 \begin{itemize}
     \item In ogni istante può esistere una sola reference mutabile a un dato valore;
@@ -114,8 +113,8 @@ Rust implementa concretamente il \textit{borrowing} tramite il concetto di \text
     \item Una reference mutabile può essere creata solo da una variabile dichiarata come \texttt{mut}.\footnote{Questo vincolo è spesso dato per implicito, ma è fondamentale nel comportamento del \textit{Borrow Checker}.}
 \end{itemize}
 Si considerino i seguenti esempi, che illustrano violazioni delle regole di borrowing. Essi hanno lo scopo di mostrare come tali comportamenti non siano ammessi dal Borrow Checker, generando errori in fase di compilazione.
-\begin{lstlisting}[language=Rust, caption={Reference mutabile a variabile immutabile}, label={borrow:mut-from-unmut}]
-fn main() {
+\begin{lstlisting}[language=Rust, caption={Refe mutabile a variabile immutabile}, label={borrow:mut-from-unmut}]
+fn main() {rence
     let x: u8 = 5;
     let mut y: &mut u8 = &mut x;
     *y += 1;
@@ -200,8 +199,9 @@ error[E0597]: `x` does not live long enough
 \vspace{5pt}
 Come evidenziato dal listato~\ref{borrow:dangling-reference}, alcune violazioni delle regole di \textit{borrowing} non riguardano soltanto la mutabilità o il numero di reference presenti, ma coinvolgono anche la durata nel tempo di una reference rispetto al valore referenziato.
 
-Rust gestisce queste relazioni temporali tramite il concetto di \textit{lifetime}, che consente al compilatore di determinare se una reference sarà valida finché necessaria, evitando il rischio di \textit{dangling references}. \hfill \break \break
-Il \textit{Borrow Checker}, quindi, sfrutta anche il sistema delle \textit{lifetime} per garantire che la condivisione dei valori avvenga sempre in modo sicuro e coerente. Questo meccanismo sarà approfondito nella prossima sezione.
+Rust gestisce queste relazioni temporali tramite il concetto di \textit{lifetime}, che consente al compilatore di determinare se una reference sarà valida finché necessaria, evitando il rischio di \textit{dangling references}. \hfill
+\vspace{10pt}\\
+\noindent Il \textit{Borrow Checker}, quindi, sfrutta anche il sistema delle \textit{lifetime} per garantire che la condivisione dei valori avvenga sempre in modo sicuro e coerente. Questo meccanismo sarà approfondito nella prossima sezione.
 
 \section{Lifetime}
 Il sistema delle \textit{lifetime} rappresenta il terzo concetto fondamentale su cui si basa il modello di ownership di Rust. Questo meccanismo viene utilizzato dal \textit{Borrow Checker} per determinare la validità temporale di un prestito (\textit{borrow}).
@@ -214,9 +214,11 @@ fn biggest(a: &u8, b: &u8) -> &u8 {
     if *a > *b { a } else { b }
 }
 \end{lstlisting}
-Nel listato~\ref{lifetime:generic-problem} si tenta di restituire un riferimento all'intero più grande tra i due parametri forniti. Sebbene il codice possa sembrare corretto, il \textit{Borrow Checker} lo rifiuta, in quanto non può garantire la validità della reference restituita nel tempo.
+Nel listato~\ref{lifetime:generic-problem} si tenta di restituire un riferimento all'intero più grande tra i due parametri forniti. 
+Sebbene il codice possa sembrare corretto, il \textit{Borrow Checker} lo rifiuta, in quanto non può garantire la validità della reference restituita nel tempo.
 Il problema nasce dal fatto che le reference \texttt{a} e \texttt{b} potrebbero riferirsi a variabili definite in scope differenti, con durate di vita (\textit{lifetime}) diverse.
-Il compilatore, con le \textit{lifetime generiche}, cerca di assegnare la stessa durata ad entrambe le reference, generando ambiguità. \hfill \break \break
+Il compilatore, con le \textit{lifetime generiche}, cerca di assegnare la stessa durata ad entrambe le reference, generando ambiguità. \hfill
+\vspace{10pt}\\
 \noindent Per esplicitare una durata di vita di una reference si utilizza un'annotazione di \textit{lifetime} posta prima del tipo. Questa è rappresentata da un apostrofo seguito da un identificativo; per convenzione si usa una sola lettera, seguento l'ordine alfabetico (\texttt{'a}, \texttt{'b} e così via).
 Riferendoci all'esempio del listato~\ref{lifetime:generic-problem}, di seguito si presenta la versione corretta, con \textit{lifetime esplicite}:
 \begin{lstlisting}[language=Rust, caption={\textit{Lifetime} esplicite}, label={lifetime:explicit-solved}]
@@ -224,7 +226,8 @@ fn biggest<'a>(a: &'a u8, b: &'a u8) -> &'a u8 {
     if *a > *b { a } else { b }
 }
 \end{lstlisting}
-Nel listato~\ref{lifetime:explicit-solved} viene dichiarata una singola \textit{lifetime}, \texttt{'a}, che indica al \textit{Borrow Checker} che i parametri \texttt{a} e \texttt{b} devono avere la stessa durata di vita. Di conseguenza, se le lifetime dei parametri differiscono, la compilazione sarà rifiutata. \hfill \break \break
+Nel listato~\ref{lifetime:explicit-solved} viene dichiarata una singola \textit{lifetime}, \texttt{'a}, che indica al \textit{Borrow Checker} che i parametri \texttt{a} e \texttt{b} devono avere la stessa durata di vita. Di conseguenza, se le lifetime dei parametri differiscono, la compilazione sarà rifiutata. \hfill
+\vspace{10pt}\\
 \noindent È importante fare una precisazione: esplicitare una \textit{lifetime} \textbf{non modifica} l'effettiva durata di una variabile. Si tratta solamente di un'indicazione semantica che informa il compilatore dei vincoli temporali che devono essere rispettati tra le \textit{reference} coinvolte. Il \textit{Borrow Checker} utilizza queste annotazioni per verificare la validità dei prestiti nel tempo e può rifiutare il codice se i vincoli non sono coerenti.
 
 A tale scopo, si consideri il seguente esempio, che mostra come il \textit{Borrow Checker} possa rifiutare una reference che non rispetti le \textit{lifetime} specificate:
