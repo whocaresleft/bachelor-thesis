@@ -552,24 +552,136 @@ Una critica comune nei confronti di Rust, specialmente da coloro che provengono 
 Generalmente, la sintassi di C è considerata più semplice e minimale, principalmente per la sua natura a basso livello, la mancanza di astrazioni
 complesse e la presenza di un numero limitato di costrutti.
 
-Al contrario in Rust, dovendo gestire attentamente le relazioni di ownership, borrowing e lifetime, il codice può risultare più complesso; 
-questi non sono gli unici aspetti che contribuiscono a questa percezione: gestione degli errori, controllo del flusso, tipicizzazione generica e \textit{macro} sono
+Al contrario in Rust, dovendo gestire attentamente le relazioni di \textit{ownership}, \textit{borrowing} e \textit{lifetime}, il codice può risultare più complesso; 
+questi non sono gli unici aspetti che contribuiscono a questa percezione: gestione degli errori, controllo del flusso, supporto a \textit{generics} e \textit{macro} sono
 tutti elementi che possono rendere il linguaggio più verboso e complesso rispetto a C.
 
-\subsubsection{Annotazioni di lifetime}
+\paragraph{Annotazioni di lifetime}
 
-\subsubsection{Gestione degli errori}
+\paragraph{Generics}
+Le espressioni \textit{generics} o \textit{generic programming} indicano un meccanismo di astrazione che consente di sviluppare codice indipendente da un tipo di dato specifico.
+Il tipo viene fornito come argomento, generalmente in fase di compilazione, consentendo il riuso del codice con diversi tipi di dato. \hfill
+\vspace{8pt}\\
+\noindent Il linguaggio C non supporta nativamente lo sviluppo di codice parametrico, in quanto comporterebbe un livello di astrazione superiore rispetto alla
+semplicità a cui il linguaggio aspira. Nonostante ciò, è possibile emulare un comportamento simile, principalmente tramite l'uso di puntatori \texttt{void*}, i quali possono riferirsi a valori di qualunche tipo.
+Questo meccanismo, per quanto flessibile, richiede controlli rigorosi da parte del programmatore: 
+\begin{itemize}
+    \item un puntatore \texttt{void*} non memorizza informazioni sulla dimensione del valore puntato, rendendo necessaria la conoscenza esplicita del tipo (solitamente memorizzandone la dimensione);
+    \item le operazioni di accesso, sia in lettura che scrittura, devono essere effettuate tramite funzioni delicate come \texttt{memcpy}, in quanto non è possibile dereferenziare direttamente un puntatore \texttt{void*}.
+\end{itemize}
+Il listato~\ref{c:generics} riporta un'estratto da un'implementazione in C di un nodo di una lista generica. L'implementazione completa è disponibile sulla piattaforma Github\footnote{Disponibile nel repository, \texttt{C-data-structures}, personale del candidato, seguendo il percorso: \texttt{src/linear/}. Alcuni commenti sono stati rimossi o spostati per ragioni di spazio.}.
+\begin{lstlisting}[language=C, float, caption={Programmazione generica in C}, label={c:generics}]
+typedef struct clinkedlist {
+	node* tail;
+	size_t element_count; /* Number of elements present in the list */
+	size_t element_size; /* Size of the elements stored in the list */
+} clinkedlist;
 
-\subsubsection{Controllo del flusso}
+typedef struct node {
+	void* ptr; /* Pointer to the memory location that stores the node's value */
+	node* next; /* Pointer to the next node */
+} node;
 
-\subsubsection{Tipicizzazione generica}
+node* node_create(void* value, size_t value_size) {
+
+	node* n = NULL;
+	if (value_size <= SIZE_MAX) {
+
+		n = (node*)malloc(sizeof(node));
+		if (n) {
+
+			n->ptr = malloc(value_size);
+			if (n->ptr) {
+
+				memcpy(n->ptr, value, value_size);
+				n->next = NULL;
+			}
+			else {
+				free(n);
+				n = NULL;
+			}
+		}
+	}
+	return n;
+}
+\end{lstlisting}
+Nell'implementazione di riferimento sono state adottate alcune strategie per cercare di prevenire errori legati alla gestione manuale dei tipi e della memoria:
+\begin{itemize}
+    \item \textbf{Tipo opaco}: la struttura dati è definita solo nel file sorgente, mentre l'header contiene solo una dichiarazione incompleta (\textit{opaque type}). Questo impedisce l'accesso diretto ai campi, tra cui \texttt{element\_size} di \texttt{clinkedlist}, la cui integrità è fondamentale per il corretto funzionamento della struttura;
+    \item \textbf{Incapsulamento parziale}: la manipolazione della struttura è possibile solo tramite le funzioni fornite, obbligando l'utente a seguire un percorso logico e controllato per l'inserimento, la rimozione e la lettura dei dati. Questo permette l'introduzione di controlli interni riguardanti la validità e la coerenza dei dati. 
+\end{itemize}
+Nonostante queste precauzioni, il modello rimane fragile, per via della natura del linguaggio: l'utilizzo di \texttt{void*} permette la memorizzazione di qualsiasi valore, tra cui anche, altri puntatori; tuttavia, una eccessiva stratificazione di indirezione (i.e.\  puntatori a puntatori) può compromettere
+la corretta deallocazione della memoria. \hfill
+\vspace{15pt} \\
+\noindent Rust adotta un approccio diverso, supportando la programmazione generica tramite le cosiddette \textit{zero-cost abstractions}\footnote{Si tratta di meccanismi e implementazioni astratti che non introducono overhead in fase di esecuzione rispetto al codice esplicito (concreto) equivalente.}.
+Durante la fase di compilazione, il compilatore applica un processo detto \textit{monomorfizzazione}, trasformando ogni utilizzo di una funzione o una struttura
+generica in una versione specifica per il tipo utilizzato.\hfill 
+%Rust consente inoltre di specificare vincoli sui tipi generici (\textit{trait bounds}), tramite \texttt{impl Trait} e \texttt{where}. Questi meccanismi sono equivalenti, rispettivamente, a \texttt{implements Interface} e \texttt{<T extends \ldots>} di Java. \hfill
+\vspace{8pt}\\
+\noindent Per ottenere un confronto sulla complessità del codice, viene riportato, nel listato~\ref{rust:generics}, l'implementazione in Rust del listato~\ref{c:generics}: 
+il supporto alla programmazione generica di Rust permette di definire strutture dati e funzioni generiche con codice sicuro e conciso.
+\begin{lstlisting}[language=C, float, caption={Programmazione generica in Rust}, label={rust:generics}]
+struct Clinkedlist<T> {
+	tail: Option<Box<Node<T>>>,
+	element_count: usize
+}
+
+struct Node<T> {
+    value: T,
+    next: Option<Box<Node<T>>>
+}
+
+impl<T> Node<T> {
+    fn new(value: T) -> Node<T> {
+        Node {
+            value,
+            next: None
+        }
+    }
+}
+\end{lstlisting}
+
+L'implementazione risulta più semplice rispetto alla controparte C:\ non è necessario gestire manualmente la dimensione dei valori o gli accessi diretti alla memoria.
+A tal proposito, si consideri che \texttt{Node::<T>::new()} del listato~\ref{rust:generics} è l'equivalente di \texttt{node\_create} del listato~\ref{c:generics}.
+
+\paragraph{Controllo del flusso}
+
+\paragraph{Gestione degli errori}
+I due linguaggi si distinguono per i meccanismi impiegati per la gestione degli errori.
+In C, tipicamente, tale gestione è opzionale: il linguaggio non impone alcun controllo esplicito, lasciando la responsabilità al programmatore.
+Il meccanismo maggiormente diffuso per segnalare errori è basato sul valore di ritorno, tipicamente interi, da parte delle funzioni, secondo
+convenzioni informali e non uniformi\footnote{Lo standard C non definisce una convenzione uniforme sugli interi da utilizzare come codice di errore. Alcune funzioni
+utilizzano 0 per indicare successo e ogni altro valore viene interpretato come fallimento. Per questo motivo, è sempre opportuno controllare la documentazione di una funzione,
+per determinare come interpretare l'esito: alcune funzioni potrebbero intepretare ogni valore non negativo con successo, come altre potrebbero utilizzare 0 per fallimento.}.
+
+L'assenza di vincoli espliciti sul controllo dell'esito rende facile, e comune, la mancata verifica di errori. 
+Questo tuttavia può portare a comportamenti indefiniti, principalmente dovuti all'elaborazione di dati non validi, derivanti da
+chiamate a funzioni fallite, il cui risultato viene interpretato come se fosse corretto. \hfill
+\vspace{9pt}\\
+\noindent Come riportato dalla documentazione ufficiale\cite{rust-book}, Rust distingue tra due classi di errori, 
+\textit{recuperabili} e \textit{irrecuperabili}, fornendo meccanismi distinti per la loro gestione.
+
+Gli errori \textit{irrecuperabili} rappresentano situazioni dalle quali non è sicuro proseguire con l'esecuzione del programma, come l'accesso oltre i limiti di un array o 
+il tentativo di dereferenziare un valore \texttt{None}\footnote{Rust utilizza l'enumerazione \texttt{Option<T>} per rappresentare un valore opzionale: \texttt{Some(T)} rappresenta la presenza di un valore, di tipo \texttt{T}, mentre \texttt{None} rapprenta l'assenza di un valore valido}. 
+Rust gestisce questo tipo di errore tramite \textit{panic}, i quali causano l'immediata interruzione del programma e rilasciano correttamente
+tutte le risorse allocate dal processo.
+
+Al contrario, gli errori \textit{recuperabili} rappresentano situazioni meno gravi, per le quali è possibile definire una logica di gestione, senza necessità di interruzione: per esempio, il tentativo di apertura di un file inesistente potrebbe essere gestito creando il file, invece di terminare l'esecuzione.
+Per la gestione di questo tipo di errore, Rust offre l'enumerazione \texttt{Result<T, E>}, in cui \texttt{T} ed \texttt{E} sono tipi generici:
+\begin{itemize}
+    \item \texttt{\textbf{Ok(T)}}: rappresenta la variante di Result che indica successo, contenente il valore, di tipo \texttt{T}, restituito;
+    \item \texttt{\textbf{Err(E)}}: è la variante di Result che indica un fallimento, contenente un valore descrittivo dell'errore, di tipo \texttt{E}, generato.
+\end{itemize}
+A differenza del C, la gestione esplicita degli errori è obbligatoria in Rust: gli errori irrecuperabili vengono gestiti tramite \texttt{panic}; per quelli recuperabili, il 
+compilatore impone al programmatore di gestire esplicitamente entrambe le varianti (\texttt{Ok} ed \texttt{Err}) tramite costrutti come \texttt{match} e \texttt{if let} oppure operatori come \texttt{?}, il quale propaga l'errore. 
+Questo obbligo riduce la probabilità di errori non gestiti, rendendo il codice più sicuro e robusto rispetto all'approccio tradizionale di C.
 
 \paragraph{Macro}
 I due linguaggi gestiscono le \textit{macro} in maniera completamente differente.
 Come riportato dalla documentazione GCC\cite{GNU-online-docs}, le \textit{macro} in C sono frammenti di codice a cui viene associato un nome, dichiarate con la direttiva \texttt{\#define}. 
 
 Durante la fase di pre-processamento (prima della compilazione),
-quando viene incontrato il nome di una \textit{macro} , esso viene sostituito con il codice associato. Si tratta di una semplice sostituzione testuale, come
+quando viene incontrato il nome di una \textit{macro}, esso viene sostituito con il codice associato. Si tratta di una semplice sostituzione testuale, come
 mostrato nel seguente esempio:
 \begin{lstlisting}[language=C, caption={Definizione di \textit{macro} in C}, label={c:macro}]
 #define printline(x) printf("%s\n", x)
@@ -590,6 +702,28 @@ per osservare il codice generato è necessario utilizzare il flag \texttt{-E} du
     \begin{center}
         \includegraphics[width=.6\textwidth]{c-macro-preprocess}
         \caption{Traduzione di una \textit{macro} in C}\label{c:macro-preprocess}
+    \end{center}
+\end{figure}
+La natura semplice delle macro C comporta delle limitazioni e falle di sicurezza, molte delle quali sono riportate sulla documentazione GCC\cite{GNU-online-docs}. 
+A dimostrazione di ciò, si consideri la seguente modifica del listato~\ref{c:macro}:
+\begin{lstlisting}[language=C, caption={Utilizzo scorretto di \textit{macro} in C}, label={c:macro-2}]
+#include <stdio.h>
+#define printline(x) printf("%s\n", x)
+int main(void) {
+    int my_val = 150;
+    printline(my_val);
+    return 0;
+}
+\end{lstlisting}
+Nel listato~\ref{c:macro-2} si tenta di sfruttare la stessa macro, \texttt{printline}, per stampare il contenuto di un intero. 
+È interessante osservare che, nonostante il mismatch dei tipi (\texttt{\%s} indica di interpretare il parametro come stringa), il compilatore
+ genera soltanto un warning, producendo lo stesso un file eseguibile. 
+Tuttavia, tentando l'esecuzione si verifica un crash immediato dovuto a \textit{segmentation fault},
+come è osservabile dall'immagine~\ref{c:macro-exec}. \hfill
+\begin{figure}[htbp]
+    \begin{center}
+        \includegraphics[width=1\textwidth]{c-macro-exec}
+        \caption{Limitazioni delle \textit{macro} C}\label{c:macro-exec}
     \end{center}
 \end{figure}
 \vspace{10pt}\\
