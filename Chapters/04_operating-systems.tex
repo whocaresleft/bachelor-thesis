@@ -137,7 +137,7 @@ Inoltre, è preferito incapsulare il codice non sicuro all'interno di un'astrazi
 
 \subsection{Gestione delle risorse}
 In questa sottosezione verranno analizzati e confrontati i meccanismi offerti da C e Rust per la gestione delle risorse. In particolare
-verrà analizzata la gestione di: memoria dinamica, file su disco, risorse di rete e thread con risorse condivise\footnote{Gli esempi di codice riportati in questa sottosezione sono stati sviluppati su ambiente Linux con \texttt{glibc}}.
+verrà analizzata la gestione di: memoria dinamica, file su disco, risorse di rete e \textit{thread} con risorse condivise\footnote{Gli esempi di codice riportati in questa sottosezione sono stati sviluppati su ambiente Linux con \texttt{glibc}}.
 
 \subsubsection{Memoria dinamica}
 Oltre al \textit{modello di ownership}, Rust incapsula la gestione della memoria dinamica tramite astrazioni note come \textit{smart pointers}, con lo scopo
@@ -164,14 +164,14 @@ Queste astrazioni si fondano sul pattern \textit{RAII}, unendo le operazioni di 
 #include <stdio.h>
 int main(void) {
 
-    int* value = malloc(sizeof(int)); // Allocation
+    int* value = malloc(sizeof(int)); // Allocazione
     if(value == NULL) return -1;
 
-    *value = 52; // Initialization
+    *value = 52; // Inizializzazione
 
-    printf("%d\n", *value); // Access
+    printf("%d\n", *value); // Accesso
 
-    free(value);    // Deallocation
+    free(value);    // Deallocazione
 
     return 0;
 }
@@ -180,11 +180,11 @@ int main(void) {
 \begin{lstlisting}[language=Rust, caption={Gestione ciclo di vita in memoria dinamica Rust}, label={rust:mem-handle}]
 fn main() {
 
-    let value = Box::<i32>::new(52); // RAII: Resource Allocation Is Initialization
+    let value = Box::<i32>::new(52); // Allocazione e inizializzazione
 
-    println!("{}", *value); // Access
+    println!("{}", *value); // Accesso
 
-} // <-- End of scope: automatic deallocation
+} // <-- Fine scope: Deallocazione automatica
 \end{lstlisting}
 Entrambi i listati~\ref{c:mem-handle} e~\ref{rust:mem-handle} implementano la stessa logica: viene allocato spazio sufficiente per un intero
 nella memoria heap, successivamente viene inizializzato, stampato e infine deallocato.
@@ -197,11 +197,74 @@ Rust, al contrario, segue il paradigma \textit{RAII}:\  la fase di allocazione e
 avviene automaticamente al termine dello scope, prevenendo sia la mancata, che la doppia, liberazione. L'unico aspetto simile rispetto a C è l'accesso, gestito tramite dereference.
 
 \subsubsection{File}
+Sia Rust che C offrono strumenti per eseguire operazioni di input/output su file del filesystem. I due linguaggi si distinguono per
+il livello di astrazione offerto. \hfill
+\vspace{10pt}\\
+\noindent Nel linguaggio C, le principali operazioni di I/O vengono fornite dalle \texttt{API POSIX}, tramite funzioni definite nelle librerie \texttt{unistd.h} e \texttt{fcntl.h}.
+L'accesso è basato su \textit{file descriptor}\footnote{Un \textit{file descriptor} è un intero senza segno che identifica univocamente un file nel contesto di un determinato processo.}, 
+i quali vengono ottenuti tramite la funzione \texttt{open} e successivamente gestiti tramite \texttt{read}, \texttt{write} e \texttt{close}.
+L'interfaccia rispecchia la natura di basso livello del linguaggio, rappresentando un wrapper alle chiamate di sistema (syscall). L'esito di un'operazione è determinabile attraverso il suo valore di ritorno, solitamente non negativo per indicare il successo e viceversa.
+La problematica principale deriva dal fatto che la gestione degli errori è solamente suggerita, ma non obbligatoria. Sta alla discrezione del programmatore controllare la validità dei \textit{file descriptor}
+ o il numero di byte effettivamente letti o scritti, rispetto a quelli aspettati.
+Spesso purtroppo, queste verifiche vengono omesse e, come conseguenza, vi è il rischio di letture e scritture su \textit{file descriptor} non validi, risultando spesso in \textit{undefined behaviour}. \hfill
+\vspace{10pt}\\
+\noindent Rust d'altra parte, espone una \texttt{API} con un livello di astrazione più alto, tramite il modulo \texttt{std::fs}. Tale modulo mette a disposizione la struttura \texttt{File}, la quale 
+incapsula interamente la gestione dei \textit{file descriptor}.
+Le operazioni di lettura e scrittura avvengono tramite funzioni esposte dal modulo \texttt{std::io}, sia con bufferizzazione che senza. In generale, per letture e scritture piccole, è
+sufficiente usare le funzioni \texttt{read} e \texttt{write}, mentre nella maggior parte dei casi, è consigliato l'utilizzo delle strutture con supporto alla bufferizzazione: \texttt{BufReader} e \texttt{BufWriter}.
+Le strutture fornite da Rust integrano un meccanismo per la gestione degli errori: le operazioni che possono fallire restituiscono il tipo \texttt{Result<T, E>}, forzando di conseguenza il programmatore a gestire esplicitamente
+l'errore, tramite costrutti \texttt{if-else} o \texttt{match} per definire una logica di gestione dell'errore, oppure propagando l'errore tramite l'operatore \texttt{?}. \hfill
+\vspace{10pt}\\
+\noindent Si considerino i seguenti esempi che mostrano un esempio di operazioni di I/O su file:
+\begin{lstlisting}[language=C, caption={I/O su file in C}, label={c:file-io}]
+#include <unistd.h>
+#include <stdlib.h>
+#include <fcntl.h>
+int main(void) {
 
+    int read_from = open("./read_from.txt", O_RDONLY , S_IRUSR); // Apertura file
+    int write_to = open("./write_to.txt", O_CREAT | O_WRONLY | O_APPEND , S_IWUSR); // Apertura file
+
+    char buf[2048];
+    ssize_t read_byte;
+
+    
+    while ( (read_byte = read(read_from, buf, sizeof(buf))) > 0) { // Lettura
+        write(write_to, buf, read_byte); // Scrittura
+    }
+
+    close(write_to);   // Chiusura
+    close(read_from);  // Chiusura
+    return 0;
+}
+\end{lstlisting}
+\begin{lstlisting}[language=Rust, caption={I/O su file in Rust}, label={rust:file-io}]
+use std::fs::File;
+use std::io::{Read, Write};
+fn main() -> std::io::Result<()> {
+
+    let mut read_from = File::open("read_from.txt")?; // Apertura in lettura
+    let mut write_to = File::create("write_to.txt")?; // Creazione e apertura in scrittura
+
+    let mut buf = [0u8; 2048];
+
+    loop {
+        let read_byte = read_from.read(&mut buf)?;  // Lettura
+        if read_byte == 0 { break }
+        write_to.write_all(&buf[..read_byte])?; // Scrittura
+    }
+    Ok(())
+} // Fine scope: Chiusura dei file
+\end{lstlisting}
+La logica implementata in entrambi i listati,~\ref{c:file-io} e~\ref{rust:file-io}, è la stessa: dalla directory attuale vengono aperti due file, \texttt{read\_from} in lettura e \texttt{write\_to} in scrittura, successivamente viene letto l'intero contenuto di \texttt{read\_from} e viene scritto su \texttt{write\_to}.
+
+Nel listato~\ref{c:file-io}, i controlli sugli errori sono stati intenzionalmente omessi per evidenziare che in C tale comportamento è ammesso (l'unico controllo effettuato è su \texttt{read}, per determinare quando la fine della lettura).
+
+Nel listato~\ref{rust:file-io}, invece, gli errori vengono gestiti tramite l'operatore \texttt{?}, il quale propaga l'errore alla funzione chiamante, garantendo simultaneamente sicurezza e maggiore leggibilità del codice.
 
 \subsubsection{Socket}
 Entrambi i linguaggi mettono a disposizione strumenti per lo sviluppo di applicazioni di rete, in particolare per 
-la comunicazione orientata alla connessione (e.g. socket TCP). \hfill
+la comunicazione orientata alla connessione (e.g.\  socket TCP). \hfill
 \vspace{8pt}\\
 \noindent Nel linguaggio C, l'interfaccia di programmazione di rete è fornita principalmente dalle librerie di sistema \texttt{POSIX}:\ 
 \begin{itemize}
@@ -248,47 +311,78 @@ gestiti esplicitamente oppure che l'errore venga propagato al chiamante tramite 
 #include <stdio.h>
 int main(void) {
 
-    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    int fd = socket(AF_INET, SOCK_STREAM, 0); // Creazione
 
     struct sockaddr_in addr = {
         .sin_family = AF_INET,
         .sin_port = htons(50000),
         sin_addr.s_addr = INADDR_ANY
     };
-    bind(fd, (struct sockaddr*)&addr, sizeof(addr));
+    bind(fd, (struct sockaddr*)&addr, sizeof(addr)); // Binding
 
-    listen(fd, 1);
+    listen(fd, 1); // Messa in ascolto
 
-    int client_fd = accept(fd, NULL, NULL);
+    int client_fd = accept(fd, NULL, NULL); // Accettazione
 
     char buf[1024];
-    ssize_t read_byte = read(client_fd, buf, sizeof(buf));
-    write(client_fd, buf, read_byte);
+    ssize_t read_byte = read(client_fd, buf, sizeof(buf)); // Lettura
 
-    close(client_fd);
-    close(fd);
+    write(client_fd, buf, read_byte); // Scrittura
+
+    close(client_fd);   // Chiusura
+    close(fd);          // Chiusura
     return 0;
 }
 \end{lstlisting}
 \begin{lstlisting}[language=Rust, float, caption={Semplice server TCP in Rust}, label={rust:tcp-serv}]
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write};
-fn main() -> std::io::Resilt<()> {
+fn main() -> std::io::Result<()> {
 
-    let server = TcpListener::bind("0.0.0.0:50000")?;
+    let server = TcpListener::bind("0.0.0.0:50000")?; // Creazione, binding e messa in ascolto
     
-    let (mut client, _) = server.accept()?;
+    let (mut client, _) = server.accept()?; // Accettazione
 
     let mut buffer = [0; 1024];
-    let n = client.read(&mut buffer)?;
+    let n = client.read(&mut buffer)?; // Lettura
 
-    client.write(&buffer[..n])?;
+    client.write(&buffer[..n])?; // Scrittura
 
     Ok(())
-}
+} // Fine scope: Chiusura dei socket
 \end{lstlisting}
 
 \subsubsection{Thread}
+La gestione dei \textit{thread} è fondamentale per un linguaggio di programmazione moderno, in quanto consente di suddividere il lavoro su più unità esecutive e sfruttare
+il parallelismo in sistemi multicore o multiprocessore. 
+Sia C che Rust
+offrono meccanismi per la creazione e la gestione dei \textit{thread}, ma con approcci differenti. 
+
+La programmazione parallela rappresenta un contesto ampio e complesso, per cui una 
+trattazione sufficientemente dettagliata richiederebbe un capitolo assestante e non rientrerebbe nell'ambito di questa trattazione, che mira a un confronto di base tra i linguaggi. \hfill
+\vspace{10pt}\\
+\noindent In C, la programmazione concorrente si basa tipicamente sulla libreria \texttt{pthread.h}, parte dello standard \texttt{POSIX}.\ 
+Questa libreria offre primitive per la creazione (\texttt{pthread\_create}) e sincronizzazione (\texttt{pthread\_join}, \texttt{pthred\_mutex} e altri) dei \textit{thread}.
+Il completo controllo sui \textit{thread}, fornito dalla libreria, comporta, però, che sia il programmatore stesso a doverne garantire una corretta gestione: sincronizzando i \textit{thread} e
+garantendo un accesso corretto alle risorse condivise. 
+L'approccio del linguaggio C, infatti, prevede semplicemente di fornire al programmatore gli strumenti
+necessari, ma è una sua responsabilità adoperarli correttamente: non vengono effettuati controlli sull'utilizzo corretto di \textit{mutex} o risorse condivise durante la fase 
+di compilazione, permettendo di incorrere in errori durante l'esecuzione. \hfill
+\vspace{10pt}\\
+\noindent Rust, d'altra parte, tramite il modulo \texttt{std::thread}, offre un'interfaccia di livello più alto. 
+Nonostante internamente sia basata su \texttt{pthread}, \texttt{std::thread} integra strumenti per la corretta gestione di \textit{mutex} e accesso alle risorse condivise, tramite
+le strutture \texttt{Arc<T>} e \texttt{Mutex<T>}, che garantiscono la condivisione sicura di dati mutabili tra \textit{thread}.
+
+\texttt{Arc<T>} è uno smart pointer a conteggio di riferimento (ha un contatore interno per tenere traccia dei riferimetni) che permette la condivisione non mutabile di dati tra \textit{thread}.
+\texttt{Mutex<T>} è una struttura che fornisce mutua esclusione su una risorsa per l'accesso concorrente.
+La combinazione \texttt{Arc< Mutex<T\textgreater\ >} è la forma idiomatica di Rust per la condivisione sicura di dati mutabili tra \textit{thread}.
+
+Vengono inoltre messi a disposizione due Trait fondamentali: \texttt{Send}, per indicare che è possibile trasferire la ownership dei valori di un tipo tra più \textit{thread} e \texttt{Sync}, per indicare che per un tipo è sicuro avere reference divise su più \textit{thread}.
+
+Il compilatore controlla l'implementazione dei Trait per determinare la validità degli accessi alle risorse, riducendo la probabilità di errori di concorrenza. \hfill
+\vspace{10pt}\\
+\noindent In conclusione, nonostante il modello di Rust possa semprare più complesso o verboso rispetto alla flessibilità offerta dalle librerie C, esso
+garantisce un accesso sicuro alle risorse condivise e, in generale, riesce a prevenire a livello di compilazione una classe di errori comuni: \textit{race condition} e accesso concorrente in scrittura.
 
 \subsection{Sicurezza della memoria}\label{sub:mem-safe}
 In questa sottosezione verranno analizzati alcuni tra gli errori più comuni legati alla gestione della memoria,
