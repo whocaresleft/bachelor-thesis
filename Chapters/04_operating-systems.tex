@@ -203,8 +203,8 @@ il livello di astrazione offerto. \hfill
 \noindent Nel linguaggio C, le principali operazioni di I/O vengono fornite dalle \texttt{API POSIX}, tramite funzioni definite nelle librerie \texttt{unistd.h} e \texttt{fcntl.h}.
 L'accesso è basato su \textit{file descriptor}\footnote{Un \textit{file descriptor} è un intero senza segno che identifica univocamente un file nel contesto di un determinato processo.}, 
 i quali vengono ottenuti tramite la funzione \texttt{open} e successivamente gestiti tramite \texttt{read}, \texttt{write} e \texttt{close}.
-L'interfaccia rispecchia la natura di basso livello del linguaggio, rappresentando un wrapper alle chiamate di sistema (syscall). L'esito di un'operazione è determinabile attraverso il suo valore di ritorno, solitamente non negativo per indicare il successo e viceversa.
-La problematica principale deriva dal fatto che la gestione degli errori è solamente suggerita, ma non obbligatoria. Sta alla discrezione del programmatore controllare la validità dei \textit{file descriptor}
+L'interfaccia rispecchia la natura di basso livello del linguaggio, rappresentando un semplicissimo wrapper alle chiamate di sistema (\textit{syscalls}). L'esito di un'operazione è determinabile attraverso il suo valore di ritorno, solitamente non negativo per indicare il successo e viceversa.
+La problematica principale deriva dal fatto che la gestione degli errori è non obbligatoria, sta alla discrezione del programmatore controllare la validità dei \textit{file descriptor}
  o il numero di byte effettivamente letti o scritti, rispetto a quelli aspettati.
 Spesso purtroppo, queste verifiche vengono omesse e, come conseguenza, vi è il rischio di letture e scritture su \textit{file descriptor} non validi, risultando spesso in \textit{undefined behaviour}. \hfill
 \vspace{10pt}\\
@@ -806,38 +806,113 @@ alcuni errori durante la compilazione e rilevandone altri a runtime. In C, d'alt
 \textit{undefined behaviour} o crash del programma.
 
 \subsection{Prestazioni}
-In questa sottosezione verranno confrontate le prestazioni che tipiche dei programmi scritti in C e Rust, basandosi
+In questa sottosezione verranno confrontate le prestazioni tipiche dei programmi scritti in C e Rust, basandosi
 su benchmark esistenti e pubblicamente disponibili.
-Non verrà presentato codice dettagliato né un'analisi sperimentale diretta, per i seguenti motivi: una valutazione accurata
-richiederebbe sviluppo di codice ottimizzato per entrambi i linguaggi, un set ampio di programmi da testare, differenti ambienti di esecuzione (diversi sistemi operativi, compilatori, architetture hardware) e una metodologia
-di confronto rigorosa, la quale andrebbe oltre gli obiettivi di questa trattazione.
 
-Come già accennatto, il linguaggio C è storicamente noto per le perstazioni in termini di velocità d'esecuzione, dovute principalmente all'assenza di astrazioni
+Non verrano presentati né codice dettagliato né un'analisi sperimentale diretta, per i seguenti motivi: una valutazione accurata
+richiederebbe sviluppo di codice ottimizzato per entrambi i linguaggi, un set ampio di programmi da testare, differenti ambienti di esecuzione (diversi sistemi operativi, compilatori, architetture hardware) e una metodologia
+di confronto rigorosa, che andrebbe oltre gli obiettivi di questa trattazione. \hfill
+\vspace{10pt}\\
+\noindent Come accennatto a inizio del capitolo, il linguaggio C è storicamente noto per le prestazioni, principalmente in termini di velocità d'esecuzione, dovute all'assenza di astrazioni
 complesse e al runtime minimo richiesto. 
 
-Rust, d'altra parte, mira a fornire sicurezza della memoria senza compromettere le prestazioni, puntando a fornire velocità d'esecuzione paragonabili a C e C++.
-
-Per un confronto concreto vengono riportati i risultati tratti da The Computer Language Benchmarks Game\cite{benchmarksgame}, un progetto
-che confronta le prestazioni di diversi linguaggi di programmazione su algoritmi comuni. Il confronto è basato su quattro 
-parametri: 
+Rust, d'altra parte, mira a garantire la sicurezza della memoria senza compromettere le prestazioni, puntando a fornire velocità d'esecuzione paragonabili a C e C++. \hfill
+\vspace{10pt}\\
+\noindent Per offrire un confronto concreto, vengono riportati i risultati tratti da \textit{The Computer Language Benchmarks Game}\cite{benchmarksgame}, un progetto che
+confronta le prestazioni di diversi linguaggi di programmazione nell'esecuzione di algoritmi comuni. Il confornto si basa su quattro parametri:
 \begin{itemize}
-    \item secs: tempo di esecuzione totale, misura il tempo dall'inizio alla fine dell'esecuzione; 
-    \item cpu secs: tempo effettivamente trascorso internamente al programma, considera solo il tempo della CPU, escludendo pause dovute a I/O e context switch;
-    \item mem: memoria massima utilizzata dal processo; 
-    \item gz: dimensione del file sorgente compresso tramite gzip.
+    \item \textbf{secs}: tempo di esecuzione totale (\textit{wall-clock time});
+    \item \textbf{cpu secs}: tempo effettivo utilizzato dalla CPU, trascurando attese dovute a I/O e context switch;
+    \item \textbf{mem}: picco di memoria RAM utilizzata dal processo;
+    \item \textbf{gz}: dimensione del file sorgente compresso con \texttt{gzip}, interpretato come indice di verbosità e complessità dell'implementazione.
 \end{itemize}
+Verranno analizzati due benchmark distinti: uno principalmente \textit{CPU-bound} e uno principalmente \textit{I/O-bound}. 
+Non viene incluso un esempio della categoria `\textit{contentious}', in quanti tali benchmark tendono a essere influenzati 
+da librerie esterne e dalla specifica implementazione degli algoritmi, non tanto dalle caratteristiche intrinseche del linguaggio e, per questo, 
+non rientrano negli obiettivi della trattazione.
 
-\paragraph{fannuk-redux} tbd
+\subsubsection{Confronto CPU-bound}\label{par:cpu-bound} Il benchmark \textit{CPU-bound} considerato è \texttt{n-body}. Il problema consiste
+nel simulare il moto di \texttt{n} corpi che interagiscono attraverso la forza gravitazionale:
+a ogni passo viene calcolata la forza tra tutte le coppie di corpi,
+si aggiornano le velocità in base alle accelerazioni risultanti e si aggiornano le posizioni.
+L'algoritmo ha complessità quadratica (\texttt{O($n^2$)}) ed è privo di I/O significativo: è un carico interamente \textit{CPU-bound}. \hfill
+\vspace{10pt}\\
+\noindent Nella tabella~\ref{tab:n-body} sono riportati i risultati del benchmark \texttt{n-body} relativi a Rust e C. 
+Per ciascun linguaggio è stata selezionata l'esecuzione migliore e quella peggiore esecuzione in termini di \textbf{cpu secs}. Sono state considerate solo 
+le implementazioni ideomatiche, escludendo quelle che ricorrono a \textit{SIMD scritti a mano}\footnote{Si tratta di un'ottimizzazione manuale del codice per sfruttare le istruzioni vettoriali della CPU:\  invece di scrivere codice `standard', il programmatore scrive esplicitamente codice che utilizza i registri \textit{Single Instruction, Multiple Data}.} o a codice \textit{unsafe} in Rust. \hfill
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Linguaggio} & \textbf{secs} & \textbf{cpu secs} & \textbf{mem} (KB) & \textbf{gz} (B) \\
+        \midrule
+        Esecuzione migliore & & & & \\
+        C  & 4.98 & 4.98 & 2482 & 1186 \\
+        Rust & 3.46 & 3.46 & 2937 & 1774 \\
+        \midrule
+        Esecuzione peggiore & & & & \\
+        C & 6.89 & 6.89 & 2490 & 1250 \\
+        Rust & 5.52 & 5.51 & 3027 & 1483 \\
+        \bottomrule
+    \end{tabular}
+    \caption{\small{Risultati \texttt{n-body} per Rust e C (implementazioni ideomatiche)}}\label{tab:n-body}
+\end{table}
+\vspace{1pt}\\
+\noindent Dagli estratti riportati nella tabella~\ref{tab:n-body} è possibile osservare che, da un punto di vista temporale, anche in un benchmark puramente \textit{CPU-bound},
+Rust riesca a raggiungere C in termini di velocità d'esecuzione, senza ricorrere a codice \textit{unsafe}. 
+Nei benchmark Rust ha, addirittura, superato C in velocità d'esecuzione:
+nel caso migliore, Rust ha impiegato
+circa il \texttt{30\%} di tempo in meno; nel caso peggiore circa il \texttt{20\%}. 
 
-\paragraph{binary-tree} tbd
+Questo risultato supporta l'idea che Rust possa rappresentare un'alternativa a C anche in contesti ad alta intensità computazionale, pur garantendo la sicurezza della memoria.
 
-\paragraph{regex-redux} tbd
+Dal punto di vista dell'occupazione di risorse, invece, C si presenta vantaggioso, richiedendo una quantità inferiore di memoria durante l'esecuzione e producendo sorgenti più compatti (successivamente alla compressione).
 
-\paragraph{Conclusione} In conclusione, entrambi i linguaggi, data la loro natura, presentano ottime prestazioni. Con le opporture ottimizzazioni, sia 
-a livello di codice che di compilazione, Rust riesce ad avvicinarsi a C in termini di velocità d'esecuzione. In termini di velocità di compilazione è un'altra storia:
-i compilatori C (principalmente GCC) si dimostrano più veloci, specialmente per la natura del linguaggio, dove Rust, richiede più tempo per i vari controlli eseguiti
-dal borrow checker. Per quanto riguarda le dimensioni del file, Rust genera eseguibili più grandi, con configurazioni di default, per via dei simboli di debug e la libreria standard.
-Memoria: in termini di RAM utilizzata, i linguaggi sembrano essere quasi uguali.
+\subsubsection{Confronto I/O-bound} Il benchmark \textit{I/O-bound} selezionato è \texttt{fasta}. Il problema consiste nella generazione di DNA (utilizzando i caratteri \texttt{A}, \texttt{C}, \texttt{G} e \texttt{T}) secondo pattern sia deterministici che pseudocasuali, seguita dalla 
+loro scrittura sullo standard output. 
+L'algoritmo presenta un carico elaborazione minimo: rappresenta un esempio di algoritmo principalmente \textit{I/O-bound}, in quanto la maggior parte del tempo di esecuzione è trascorso in scrittura sullo standard output.
+Inoltre, la presenza di generazione pseudocasuale e ripetitiva comporta un utilizzo intensivo di stringhe e buffer, rendendo il benchmark utile per verificare l'efficienza di gestione della memoria dinamica. \hfill
+\vspace{7pt}\\
+\noindent Nella tabella~\ref{tab:fasta} sono riportati i risultati del benchmark \texttt{fasta} relativi a Rust e C.
+Come specificato nell'analisi CPU-bound~\ref{par:cpu-bound}, per ciascun linguaggio viene riportata l'esecuzione migliore e quella peggiore in termini di \textbf{cpu secs}. Sono state considerate solamente
+le implementazioni ideomatiche, escludendo quelle che ricorrono a \textit{SIMD scritti a mano} o codice \textit{unsafe} in Rust.
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Linguaggio} & \textbf{secs} & \textbf{cpu secs} & \textbf{mem} (KB) & \textbf{gz} (B) \\
+        \midrule
+        Esecuzione migliore & & & & \\
+        C & 0.79 & 0.78  & 2236 & 1469\\
+        Rust & 2.03 & 2.03 & 3199 & 1235 \\
+        \midrule
+        Esecuzione peggiore & & & & \\
+        C & 8.27 & 8.27 & 2195 & 839 \\
+        Rust & 4.45 & 4.45 & 3113 & 1240 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Risultati del benchmark fasta per Rust e C (implementazioni ideomatiche)}\label{tab:fasta}
+\end{table}
+\vspace{6pt}\\
+\noindent Dai risultati mostrati nella tabella~\ref{tab:fasta} si osserva che non emerge un chiaro vantaggio costante tra i due linguaggi:
+nel caso migliore, C è circa \texttt{2.6} volte più veloce di Rust, mentre nel caso peggiore è Rust a richiedere circa la metà del tempo rispetto a C.
+
+Dal punto di vista dell'occupazione di risorse, valgono ancora le considerazioni fatte durante l'analisi \textit{CPU-bound}~\ref{par:cpu-bound}: C, generalmente, richiede una quantità minore di memoria RAM durante l'esecuzione e
+produce sorgenti più contenuti (una volta compressi), indicando una complessità minore dell'implementazione.
+
+\subsubsection{Conclusione} 
+Dai risultati analizzati emerge che entrambi i linguaggi offrono prestazioni paragonabili, con differenze che variano in base al tipo di carico e all'implementazione specifica.
+
+Con le opporture ottimizzazioni, sia 
+a livello di scrittura del codice che di compilazione, Rust è in grado di raggiungere, e in alcuni casi superare~\ref{par:cpu-bound}, le prestazioni di C in termini di velocità d'esecuzione, pur garantendo sicurezza della memoria. \hfill
+\vspace{5pt}\\
+\noindent Tuttavia, un evidente svantaggio di Rust è rappresentato dagli elevati tempi di compilazione, specialmente rispetto a C, dovuti principalmente ai controlli effettuati dal \textit{Borrow Checker} per determinare, e verificare, le relazioni di \textit{ownership} e \textit{borrowing}.
+Questo overhead in fase di compilazione è però compensato dalla sicurezza della memoria, garantita a tempo di compilazione, non richiedendo overhead aggiuntivi durante l'esecuzione. \hfill
+\vspace{5pt}\\
+\noindent Dal punto di vista della dimensione dei file eseguibili, Rust tende a generare file di dimensioni maggiori, principalmente per l'inclusione della libreria standard e dei simboli di debug\footnote{Tramite le opzioni del compilatore è possibile indicare l'ottimizzazione per lo spazio, che cerca di ridurre le dimensioni dell'eseguibile. Inoltre, in contesti di programmazione \textit{bare-metal}, è possibile escludere la libreria standard (\#![no\_std]), in quanto non è presente un sistema operativo sottostante.}. \hfill
+\vspace{5pt}\\
+\noindent Infine, per quanto riguarda l'utilizzo della memoria durante l'esecuzione, entrambi i linguaggi mostrano requisiti simili, con Rust che, tendenzialmente, può richiedere una quantità leggermente superiore di RAM, dovuta principalmente all'utilizzo di astrazioni.
+Infatti, nonostante quest'ultime siano definite \textit{zero-cost} in teoria, nella pratica, spesso, il compilatore non riesce a ottimizzarle pienamente e possono introdurre un minimo overhead.
 
 \subsection{Complessità del codice}
 Una critica comune nei confronti di Rust, specialmente da coloro che provengono da C, è la maggiore complessità e verbosità del linguaggio.
