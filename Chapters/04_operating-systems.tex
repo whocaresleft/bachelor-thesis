@@ -384,6 +384,19 @@ Il compilatore controlla l'implementazione dei Trait per determinare la validit�
 \noindent In conclusione, nonostante il modello di Rust possa semprare più complesso o verboso rispetto alla flessibilità offerta dalle librerie C, esso
 garantisce un accesso sicuro alle risorse condivise e, in generale, riesce a prevenire a livello di compilazione una classe di errori comuni: \textit{race condition} e accesso concorrente in scrittura.
 
+\subsubsection{Conclusioni}
+In conclusione, sotto l'aspetto della gestione delle risorse, i due linguaggi offrono strumenti analoghi, ma con differenze non trascurabili.
+
+C permette un controllo maggiore e diretto delle risorse, ma questo avviene a un costo, come la gestione manuale di puntatori, \textit{file descriptor}
+ e buffer; inoltre, la maggior parte delle funzioni utilizzate per interagire con file, \textit{socket} o \textit{thread} si basano su \texttt{API POSIX} (su sistemi \textit{\texttt{POSIX}-compliant}), non garantendo la compatibilità 
+tra più piattaforme, come Windows.
+
+D'altra parte, Rust offre un controllo più restrittivo ma semplificato, spesso incapsulando le risorse in strutture astratte, permettendo une gestione sicura delle
+ risorse e dei relativi
+errori. Inoltre, a differenza di C, Rust garantisce che il codice sviluppato sia \textit{cross-platform} in quanto le strutture \texttt{File}, \texttt{TcpStream}, \texttt{TcpListener} e \texttt{Thread} 
+sono indipendenti dalla piattaforma: l'interfaccia rimane la stessa, ma in base alla piattaforma specifica vengono utilizzati strumenti differenti di 
+basso livello (e.g. i \texttt{pthread POSIX}, definiti in \texttt{pthread.h} e i \texttt{thread Win32}, definiti in \texttt{windows.h}).
+
 \subsection{Sicurezza della memoria}\label{sub:mem-safe}
 In questa sottosezione verranno analizzati alcuni tra gli errori più comuni legati alla gestione della memoria,
 mostrando esempi di codice scritti in C e confrontandoli, quando possibile, con le controparti in Rust.
@@ -793,6 +806,38 @@ alcuni errori durante la compilazione e rilevandone altri a runtime. In C, d'alt
 \textit{undefined behaviour} o crash del programma.
 
 \subsection{Prestazioni}
+In questa sottosezione verranno confrontate le prestazioni che tipiche dei programmi scritti in C e Rust, basandosi
+su benchmark esistenti e pubblicamente disponibili.
+Non verrà presentato codice dettagliato né un'analisi sperimentale diretta, per i seguenti motivi: una valutazione accurata
+richiederebbe sviluppo di codice ottimizzato per entrambi i linguaggi, un set ampio di programmi da testare, differenti ambienti di esecuzione (diversi sistemi operativi, compilatori, architetture hardware) e una metodologia
+di confronto rigorosa, la quale andrebbe oltre gli obiettivi di questa trattazione.
+
+Come già accennatto, il linguaggio C è storicamente noto per le perstazioni in termini di velocità d'esecuzione, dovute principalmente all'assenza di astrazioni
+complesse e al runtime minimo richiesto. 
+
+Rust, d'altra parte, mira a fornire sicurezza della memoria senza compromettere le prestazioni, puntando a fornire velocità d'esecuzione paragonabili a C e C++.
+
+Per un confronto concreto vengono riportati i risultati tratti da The Computer Language Benchmarks Game\cite{benchmarksgame}, un progetto
+che confronta le prestazioni di diversi linguaggi di programmazione su algoritmi comuni. Il confronto è basato su quattro 
+parametri: 
+\begin{itemize}
+    \item secs: tempo di esecuzione totale, misura il tempo dall'inizio alla fine dell'esecuzione; 
+    \item cpu secs: tempo effettivamente trascorso internamente al programma, considera solo il tempo della CPU, escludendo pause dovute a I/O e context switch;
+    \item mem: memoria massima utilizzata dal processo; 
+    \item gz: dimensione del file sorgente compresso tramite gzip.
+\end{itemize}
+
+\paragraph{fannuk-redux} tbd
+
+\paragraph{binary-tree} tbd
+
+\paragraph{regex-redux} tbd
+
+\paragraph{Conclusione} In conclusione, entrambi i linguaggi, data la loro natura, presentano ottime prestazioni. Con le opporture ottimizzazioni, sia 
+a livello di codice che di compilazione, Rust riesce ad avvicinarsi a C in termini di velocità d'esecuzione. In termini di velocità di compilazione è un'altra storia:
+i compilatori C (principalmente GCC) si dimostrano più veloci, specialmente per la natura del linguaggio, dove Rust, richiede più tempo per i vari controlli eseguiti
+dal borrow checker. Per quanto riguarda le dimensioni del file, Rust genera eseguibili più grandi, con configurazioni di default, per via dei simboli di debug e la libreria standard.
+Memoria: in termini di RAM utilizzata, i linguaggi sembrano essere quasi uguali.
 
 \subsection{Complessità del codice}
 Una critica comune nei confronti di Rust, specialmente da coloro che provengono da C, è la maggiore complessità e verbosità del linguaggio.
@@ -1114,4 +1159,5 @@ Il messaggio di errore è osservabile nell'immagine~\ref{rust:incorrect-macro}.
 
 \subsubsection{Conclusioni}
 Nonostante siano limitati, gli aspetti esaminati mettono in luce un tratto distintivo di Rust, specialmente rispetto a C:\ il linguaggio
-accetta una complessità maggiore a livello di sintassi per offrire meccanismi di sicurezza integrati e affidabili.
+richiede uno sforzo iniziale maggiore, dovuto alla maggiore complessità della sintassi, ma questo viene ripagato garantendo meccanismi 
+di sicurezza della memoria affidabili e integrati nel linguaggio stesso.
