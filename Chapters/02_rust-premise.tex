@@ -27,10 +27,10 @@ La caratteristica principale che lo distingue dalla maggior parte degli altri li
 
 Tradizionalmente esistono due approcci principali alla gestione della memoria:
 \begin{itemize}
-    \item \textbf{Gestione manuale}: tipica di linguaggi considerati di livello più basso, come C e C++, progettati per dare al programmatore il massimo controllo sulle risorse, compresa la memoria. Secondo questo approccio è il programmatore a decidere quando allocare e quando deallocare la memoria dinamica. Il codice risultante generalmente è molto performante in termini di velocità d'esecuzione, ma questo avviene a un costo: non si hanno garanzie sulla sicurezza e sull'integrità della memoria. L'accesso e la gestione diretta diretti della memoria possono portare problemi come \textit{unfreed memory}, \textit{access after free}, \textit{double free}, \textit{dangling pointers} e simili.
+    \item \textbf{Gestione manuale}: tipica di linguaggi considerati di livello più basso, come C e C++, progettati per dare al programmatore il massimo controllo sulle risorse, compresa la memoria. Secondo questo approccio è il programmatore a decidere quando allocare e quando deallocare la memoria dinamica. Il codice risultante generalmente è molto performante in termini di velocità d'esecuzione, ma questo avviene a un costo: non si hanno garanzie sulla sicurezza e sull'integrità della memoria. L'accesso e la gestione diretti della memoria possono portare problemi come \textit{unfreed memory}, \textit{access after free}, \textit{double free}, \textit{dangling pointers} e non solo.
     \item \textbf{Gestione automatica}: tipica di linguaggi di livello più alto come Java, Python e C\#, progettati per facilitare la gestione della memoria dinamica. È infatti gestita da un componente runtime, noto come \textit{Garbage Collector}: la memoria viene allocata implicitamente quando vengono creati oggetti, e liberata quando questi non sono più validi, in maniera trasparente agli occhi del programmatore. Il \textit{GC} tiene traccia degli oggetti allocati e libera la loro memoria quando questi non sono più referenziati. Il codice prodotto generalmente è libero dalla maggior parte degli errori legati alla memoria, ma questo avviene a un costo: il codice relativo al \textit{GC} viene incluso insieme al codice dell'applicazione, generando un file eseguibile di dimensioni maggiori; inoltre, il \textit{GC} richiede risorse computazionali aggiuntive per compiere la sua funzione, eventualmente rallentando, se non bloccando momentaneamente, l'esecuzione dell'applicazione.
 \end{itemize}
-Non esiste un approccio `oggettivamente' corretto o migliore rispetto l'altro: durante lo sviluppo di un'applicazione 
+Non esiste un approccio `oggettivamente corretto': durante lo sviluppo di un'applicazione 
 la scelta sull'approccio utilizzato spesso ricade sulle specifiche esigenze.
 In applicazioni di basso livello, quali lo sviluppo di sistemi operativi, dove le prestazioni sono fondamentali, la scelta si riduce, 
 nella pratica, solamente all'approccio manuale, rendendo linguaggi come C e i suoi derivati lo standard.\hfill
@@ -41,12 +41,12 @@ Il creatore di Rust si pose come obiettivo sviluppare un linguaggio che eliminas
 Rust nacque inizialmente come progetto personale di Graydon Hoare, sviluppatore presso l'azienda Mozilla, nel 2006.
 Il progetto nacque in seguito alla frustrazione di Hoare per i frequenti malfunzionamenti di software critici, spesso dovuti 
 a problematiche di gestione della memoria\footnote{Secondo quanto riportato nell'articolo\cite{rust-2023-interview}, 
-la frustrazione di Hoare era dovuta ai continui crash del software (presumibilmente scritto in C) dell'ascensore del palazzo in cui risiedeva, al ventunesimo piano}.
+la frustrazione di Hoare era dovuta ai continui crash del software (presumibilmente scritto in C) dell'ascensore del palazzo in cui risiedeva, al ventunesimo piano.}.
 
 L'obiettivo del progetto era molto ambizioso: sviluppare un linguaggio che consentisse di scrivere codice 
 che fosse contemporaneamente \textit{veloce e sicuro}, principalmente sotto l'aspetto di gestione della memoria.
 
-Il nome `Rust' fu ispirato da un particolare tipo di fungo (ruggine, in inglese), definito dal creatore 
+Il nome `\textit{Rust}' fu ispirato da un particolare tipo di fungo (chiamato appunto \textit{Rust}, ruggine in inglese), definito dal creatore 
 stesso come `\textit{sovra-ingegnerizzati per la sopravvivenza}', metafora per la resilienza e l'attenzione 
 alla sicurezza che il linguaggio mirava a ottenere. \hfill
 \vspace{10pt}\\
@@ -54,11 +54,11 @@ alla sicurezza che il linguaggio mirava a ottenere. \hfill
 Tuttavia, dopo i primi esperimenti, il team di sviluppo decise di rinunciare completamente al \textit{GC}, ritenendolo incompatibile con gli obiettivi di performance 
 e controllo sulla memoria a cui mirava il linguaggio.
 
-Fu così introdotto un nuovo modello, noto come `\textit{modello di Ownership}', il quale si fonda 
+Fu così introdotto un nuovo modello, noto come `\textit{modello di ownership}', il quale si fonda 
 sui concetti di possesso (\textit{ownership}) e prestito (\textit{borrowing}). 
 Questo modello definisce regole rigorose sul trasferimento e l'utilizzo dei valori,cercando di prevenire gli errori legati 
-alla memoria già durante la fase di compilazione, senza necessità di un \textit{runtime} dedicato (come il \textit{GC}).
-\vspace{10pt}\\
+alla memoria già durante la fase di compilazione, senza necessità di un \textit{runtime} dedicato (come il \textit{GC}). \hfill
+\\
 \noindent Questo modello divenne la base del sistema di memoria sicura senza \textit{GC} che ancora oggi contraddistingue Rust.
 
 \section{Diffusione e adozione iniziali}
@@ -72,7 +72,7 @@ componenti critici, mirando a ottenere un miglioramento in termini di sicurezza 
 Questi primi esempi segnarono una fase di `\textit{adozione esplorativa}', in cui Rust cominciava a essere percepito come una 
 possibile alternativa ai linguaggi esistenti.
 
-\section{Espansione e interesse crescente}
+\section{Espansione e interesse crescenti}
 Nel biennio 2020--2021 si verificò una prima vera e propria espansione dovuta a una maggiore stabilità del linguaggio. Le prime adozioni, 
 da parte di Mozilla e Facebook, giocarono un ruolo cruciale: mostrarono le effettive capacità di Rust.
 
@@ -80,15 +80,15 @@ Come conseguenza, sempre più aziende cominciarono a introdurre codice Rust nell
 gli aspetti di prestazioni e sicurezza:
 \begin{itemize}
     \item \textbf{Dropbox} migrò il motore di sincronizzazione da Python a Rust, ottenendo un significativo miglioramento delle prestazioni;
-    \item \textbf{Fusion Engineering}\footnote{Si tratta di un'azienda che sviluppa sistemi software di controllo e gestione per droni. Fondata da Mara Bos, membro del \textit{Rust Project} e co-leader del \textit{Rust Library Team}.} utilizzò Rust per riscrivere i componenti relativi al sistema di controllo dei droni, precedentemente in C++;
+    \item \textbf{Fusion Engineering}\footnote{Si tratta di un'azienda che sviluppa sistemi software di controllo e gestione per droni. Fondata da Mara Bos, membro del \textit{Rust Project} e co-leader del \textit{Rust Library Team}.} utilizzò Rust per riscrivere i componenti relativi al sistema di controllo dei droni, precedentemente scritti in C++;
     \item \textbf{Discord} riscrisse la pipeline di encoding video e porzioni di backend relative alla gestione dell'autenticazione, dei messaggi e delle notifiche\footnote{Secondo dichiarazioni di Discord stessa, questa modifica ha generato un'incremento delle prestazioni fino a 10 volte.};
     \item \textbf{Amazon} iniziò a introdurre Rust nei servizi della piattaforma AWS, rafforzando il legame tra il linguaggio e l'ambiente cloud.
 \end{itemize}
 Tuttavia, in questo periodo, la maggior parte degli sviluppatori Rust contribuivano al progetto senza un supporto economico diretto.
-I membri principali del team erano in gran parte impiegati in altre aziende (Amazon, Huawei, Microsoft) e si dedicavano a Rust come attività collaterale.
+I membri principali del team erano in gran parte impiegati in altre aziende (Mozilla, Amazon, Huawei e Microsoft) e si dedicavano a Rust come attività collaterale.
 
 \section{Supporto istituzionale e professionale}
-A partire dal 2021, Rust entrò in una nuova fase, contraddistinta da un crescente supporto istituzionale. Diverse aziende del settore 
+A partire dal 2021, Rust entrò in una nuova fase, contraddistinta da un crescente supporto industriale. Diverse aziende del settore 
 tecnologico, in particolare alcune \textit{Big Tech}, iniziarono a finanziare in modo diretto lo sviluppo del linguaggio, offrendo compensi 
 economici ai membri della community che divennero, a tutti gli effetti, sviluppatori Rust a tempo pieno.
 
@@ -99,7 +99,7 @@ codice stabile, aggiornato e mantenibile. \hfill
 da risorse industriali. Di conseguenze, Rust cominciò a consolidarsi come una scelta sempre più pragmatica per applicazioni 
 ad alte prestazioni e con forti requisiti in termini di sicurezza della memoria. \hfill
 \vspace{15pt}\\
-\noindent Negli ultimi anni, Rust ha trovato crescente impiego anche a livello di sistema operativo, in particolare nel kernel.
+\noindent Negli ultimi anni, Rust ha trovato crescente impiego anche a livello di sistema operativo, in particolare in ambito kernel.
 Tra gli esempi più rilevanti si trovano l'integrazione di Rust nel kernel di Windows 11 da parte di Microsoft,
-il progetto \textit{Rust for Linux}, lo sviluppo di driver come \textit{Nova} da parte di Red Hat, il tentativo di rendere
-\textit{sudo} più sicuro da parte di Ubuntu, fino ad arrivare a interi sistemi operativi scritti in Rust, come \textit{Redox OS}\footnote{Questi progetti verranno esplorati approfonditamente nel capitolo~\ref{cap:05}}.
+il progetto \textit{Rust for Linux}, lo sviluppo di driver come \textit{Nova} da parte di Red Hat o il tentativo di rendere
+\textit{sudo} più sicuro da parte di Ubuntu, fino ad arrivare allo sviluppo di interi sistemi operativi in Rust, come \textit{Redox OS}\footnote{Questi progetti verranno esplorati approfonditamente nel capitolo~\ref{cap:05}.}.

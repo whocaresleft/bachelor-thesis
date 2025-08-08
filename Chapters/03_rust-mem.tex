@@ -2,22 +2,23 @@
 
 \chapter{Gestione della memoria in Rust}\label{cap:03}
 
-In questo capitolo viene esaminato l'approccio implementato da Rust per gestire la memoria dinamica. In particolare, verranno approfonditi concetti chiave come Ownership, Borrowing e Lifetime, illustrandone il funzionamento. L'obiettivo è evidenziare come Rust possa garantire la sicurezza della memoria senza sacrificare le prestazioni.
+In questo capitolo viene esaminato l'approccio implementato da Rust per gestire la memoria dinamica. In particolare, verranno approfonditi concetti chiave come \textit{Ownership}, \textit{Borrowing} e \textit{Lifetime}, illustrandone il funzionamento. L'obiettivo è evidenziare come Rust possa garantire la sicurezza della memoria senza sacrificare le prestazioni.
 
 Le informazioni presentate in questo capitolo sono tratte principalmente dalla documentazione ufficiale di Rust\cite{rust-book}. \hfill
 \vspace{15pt}
-\noindent L'approccio implementato da Rust per gestire la memoria dinamica è noto come `modello di ownership' (\textit{Ownership Model}). Il modello si fonda sui concetti di \textit{ownership}, \textit{borrowing} e \textit{lifetime}, i quali stabiliscono regole sulla gestione della memoria che devono essere rispettate affinché il codice sia compilabile. Il rispetto di tali regole costituisce un prerequisito per la compilazione. Il compilatore controlla che ogni vincolo sia soddisfatto e procede alla compilazione solo in caso positivo. Il modello garantisce un uso corretto e sicuro della memoria già a tempo di compilazione, evitando l'introduzione di overhead durante l'esecuzione\footnote{È opportuno precisare che un minimo overhead viene comunque introdotto, sotto forma di invocazione  automatica di una funzione dedicata alla deallocazione}.
+\noindent L'approccio implementato da Rust per gestire la memoria dinamica è noto come `modello di ownership' (\textit{Ownership Model}). Il modello si fonda sui concetti di \textit{ownership}, \textit{borrowing} e \textit{lifetime}, i quali stabiliscono regole sulla gestione della memoria che devono essere rispettate affinché il codice sia compilabile. Il rispetto di tali regole costituisce un prerequisito per la compilazione. Il compilatore controlla che ogni vincolo sia soddisfatto e procede alla compilazione solo in caso positivo. Il modello garantisce un uso corretto e sicuro della memoria già a tempo di compilazione, evitando l'introduzione di overhead durante l'esecuzione\footnote{È opportuno precisare che un minimo overhead viene comunque introdotto, sotto forma di invocazione  automatica di una funzione dedicata alla deallocazione.}.
 \section{Ownership}
-Il primo concetto alla base del modello di Ownership di Rust è l'\textit{ownership}\footnote{Sebbene innovativo, questo concetto non è unico di Rust. Quest'ultimo ha preso spunto da un pattern ampiamente utilizzato in C++: \textit{RAII} (Resource Allocation Is Initialization), il quale prevede la deallocazione delle risorse alla fine della lifetime di una variabile.} stessa, la quale definisce vincoli sui legami tra variabili e valori. Rust introduce il concetto di \textit{proprietario}: ogni valore ha un proprietario, ovvero la variabile che lo possiede in un determinato istante.
+Il primo concetto alla base del modello di ownership di Rust è l'\textit{ownership}\footnote{Sebbene innovativo, questo concetto non è unico di Rust, il quale ha infatti preso spunto da un pattern ampiamente utilizzato in C++: \textit{RAII} (Resource Allocation Is Initialization), secondo il quale gli oggetti acquisiscono le risorse di cui hanno bisogno (ovvero vengono inizializzati) al momento della loro allocazione.} stessa, la quale definisce vincoli sui legami tra variabili e valori. Rust introduce il concetto di \textit{proprietario}: ogni valore ha un proprietario, ovvero la variabile che lo possiede in un determinato istante.
 
 Si consideri, come esempio, la seguente assegnazione: \texttt{a = 5}.
 Nella maggior parte dei linguaggi di programmazione, l'istruzione verrebbe interpretata come `\textit{a vale 5}'. In Rust il significato è diverso: `\textit{a possiede il valore 5}' o `\textit{a è il proprietario di 5}'. \\
 \indent Stabilire i proprietari è fondamentale per implementare un meccanismo di deallocazione della memoria deterministico e prevedibile: chi libera la memoria relativa a un determinato valore? Il suo proprietario. \hfill
+\vspace{5pt}\\
 \noindent Le regole di \textit{ownership}, quindi, stabiliscono i vincoli sui legami tra valori e proprietari. Esse sono tre:
 \begin{itemize}
     \item Ogni valore ha un proprietario (owner);
     \item Può esserci un solo proprietario per volta (per ogni valore);
-    \item Quando il proprietario di un valore esce dallo scope\footnote{Lo scope rappresenta un range nel programma all'interno del quale un oggetto è valido. Solitamente è delimitato da una coppia di parentesi graffe}, il relativo valore viene scartato.
+    \item Quando il proprietario di un valore esce dallo scope\footnote{Lo scope rappresenta un range nel programma all'interno del quale un oggetto è valido. Solitamente è delimitato da una coppia di parentesi graffe.}, il relativo valore viene scartato.
 \end{itemize}
 
 \noindent In Rust la memoria viene liberata automaticamente quando il proprietario di un valore esce dallo scope. Per implementare questo, Rust invoca una funzione speciale, \textit{drop}, in corrispondenza della fine di ogni scope. La funzione viene invocata su ogni variabile che esce dallo scope ed è il proprietario di un valore.
@@ -60,7 +61,7 @@ Nel listato~\ref{ownership:copy-example} si osserva che \texttt{x} resta valido 
 
 Nel listato~\ref{ownership:move-example}, invece, l'assegnamento provoca il trasferimento dell'ownership, che viene trasferita a \texttt{y}, invalidando \texttt{x}. \texttt{String} è infatti un tipo complesso, allocato nell'heap, che non implementa \texttt{Copy} ma utilizza il comportamento di \texttt{Move} per impostazione predefinita. \hfill
 \vspace{10pt}\\
-\noindent Come visto nel listato~\ref{ownership:move-example}, l'assegnamento di un tipo complesso trasferisce l'ownership, rendendo invalido il riferimento originale. Questo comportamento, tuttavia, può risultare limitante in alcuni scenari.
+\noindent Come visto nel listato~\ref{ownership:move-example}, l'assegnamento di un tipo complesso trasferisce l'\textit{ownership}, rendendo invalido il riferimento originale. Questo comportamento, tuttavia, può risultare limitante in alcuni scenari.
 
 Per ovviare a tale limitazione, Rust fornisce un meccanismo per effettuare copie profonde anche con tipi che utilizzano \texttt{Move}: il tratto \texttt{Clone}\footnote{La clonazione può introdurre costi in temini di prestazioni, in quanto richiede operazioni di lettura e scrittura nella memoria Heap.}.
 
@@ -94,7 +95,7 @@ fn main() {
     println!("Variabile originale y: {}", y); // <-- Errore di compilazione: ownership trasferita
 }
 \end{lstlisting}
-Nel listato~\ref{ownership:func-example} si osserva che, passando un valore di tipo semplice come \texttt{x} (che implementa \texttt{Copy}), la variabile rimane valida anche dopo la chiamata alla funzione. Al contrario, passando \texttt{y}, di tipo \texttt{String} (che implementa \texttt{Move}), l'ownership viene trasferita al parametro \texttt{second}. Terminata l'esecuzione di \texttt{my\_func}, \texttt{second} esce dallo scope e il valore viene deallocato, rendendo \texttt{y} una variabile non più valida.
+Nel listato~\ref{ownership:func-example} si osserva che, passando un valore di tipo semplice come \texttt{x} (che implementa \texttt{Copy}), la variabile rimane valida anche dopo la chiamata alla funzione. Al contrario, passando \texttt{y}, di tipo \texttt{String} (che implementa \texttt{Move}), l'\textit{ownership} viene trasferita al parametro \texttt{second}. Terminata l'esecuzione di \texttt{my\_func}, \texttt{second} esce dallo scope e il valore viene deallocato, rendendo \texttt{y} una variabile non più valida.
 
 Tale comportamento può risultare limitante in molte situazioni pratiche, dove si desidera utilizzare un valore senza trasferirne la proprietà. Per risolvere questo problema, Rust introduce un secondo meccanismo fondamentale: il \textit{borrowing}.
 
@@ -103,7 +104,7 @@ Dopo l'\textit{ownership}, il secondo concetto fondamentale su cui si fonda il m
 
 Rust implementa concretamente il \textit{borrowing} tramite il concetto di \textit{reference}. Una \textit{reference} può essere vista come un puntatore: rappresenta un indirizzo che può essere seguito per accedere al valore memorizzato a tale indirizzo; tale valore appartiene a un'altra variabile.
 \break  \break
-\noindent In generale, le variabili in Rust, sia di tipo primitivo che reference, sono immutabili per default: non possono essere modificate una volta assegnato un valore. Tramite la parola chiave \texttt{mut}, è possibile ottenere una variabile (o una reference) modificabile. \hfill
+\noindent In generale, le variabili in Rust, sia di tipo primitivo che reference, sono immutabili per default: non possono essere modificate una volta assegnato un valore. Nel caso sia necessario modificare una variabile o una reference, è possibile  utilizzare la parola chiave \texttt{mut} durante la sua dichiarazione, indicando che tale variabile (o reference) può essere modificata durante l'esecuzione. \hfill
 \vspace{10pt}\\
 \noindent Il meccanismo che si occupa di controllare che le regole di \textit{borrowing} vengano rispettate è noto come \textit{Borrow Checker}. Le regole di \textit{borrowing} sono le seguenti:
 \begin{itemize}
@@ -113,7 +114,7 @@ Rust implementa concretamente il \textit{borrowing} tramite il concetto di \text
     \item Una reference mutabile può essere creata solo da una variabile dichiarata come \texttt{mut}.\footnote{Questo vincolo è spesso dato per implicito, ma è fondamentale nel comportamento del \textit{Borrow Checker}.}
 \end{itemize}
 Si considerino i seguenti esempi, che illustrano violazioni delle regole di borrowing. Essi hanno lo scopo di mostrare come tali comportamenti non siano ammessi dal Borrow Checker, generando errori in fase di compilazione.
-\begin{lstlisting}[language=Rust, caption={Refe mutabile a variabile immutabile}, label={borrow:mut-from-unmut}]
+\begin{lstlisting}[language=Rust, caption={Reference mutabile a variabile immutabile}, label={borrow:mut-from-unmut}]
 fn main() {rence
     let x: u8 = 5;
     let mut y: &mut u8 = &mut x;
@@ -218,8 +219,8 @@ Nel listato~\ref{lifetime:generic-problem} si tenta di restituire un riferimento
 Sebbene il codice possa sembrare corretto, il \textit{Borrow Checker} lo rifiuta, in quanto non può garantire la validità della reference restituita nel tempo.
 Il problema nasce dal fatto che le reference \texttt{a} e \texttt{b} potrebbero riferirsi a variabili definite in scope differenti, con durate di vita (\textit{lifetime}) diverse.
 Il compilatore, con le \textit{lifetime generiche}, cerca di assegnare la stessa durata ad entrambe le reference, generando ambiguità. \hfill
-\vspace{10pt}\\
-\noindent Per esplicitare una durata di vita di una reference si utilizza un'annotazione di \textit{lifetime} posta prima del tipo. Questa è rappresentata da un apostrofo seguito da un identificativo; per convenzione si usa una sola lettera, seguento l'ordine alfabetico (\texttt{'a}, \texttt{'b} e così via).
+\vspace{5pt}\\
+\noindent Per esplicitare la durata di vita di una reference si utilizza un'annotazione di \textit{lifetime} posta prima del tipo. Questa è rappresentata da un apostrofo seguito da un identificativo; per convenzione si usa una sola lettera, seguento l'ordine alfabetico (\texttt{'a}, \texttt{'b} e così via).
 Riferendoci all'esempio del listato~\ref{lifetime:generic-problem}, di seguito si presenta la versione corretta, con \textit{lifetime esplicite}:
 \begin{lstlisting}[language=Rust, caption={\textit{Lifetime} esplicite}, label={lifetime:explicit-solved}]
 fn biggest<'a>(a: &'a u8, b: &'a u8) -> &'a u8 {
@@ -263,6 +264,6 @@ In contesti dove le \textit{lifetime} non vengono esplicitamente annotate, il co
     \item Se ci sono più reference in ingresso, ma una di esse è \texttt{\&self} o \texttt{\&mut self}, allora la \textit{lifetime} di \texttt{self} viene propagata alle eventuali reference in uscita.
 \end{itemize}
 Infine, esiste una \textit{lifetime} speciale, \texttt{'static}, il quale indica una reference valida per l'intera durata del programma. Questa \textit{lifetime} tipicamente viene utilizzata per dati costanti o risorse allocate a tempo indeterminato.\hfill
-\vspace{25pt}\\
-\noindent Nel prossimo capitolo~\ref{cap:04} verrà mostrato come, grazie a questi concetti, Rust rappresenti un'alternativa valida
+\vspace{15pt}\\
+\noindent Nel prossimo capitolo: `\textit{Sistemi Operativi}'~\ref{cap:04} verrà mostrato come, grazie a questi concetti, Rust rappresenti un'alternativa valida
 per la programmazione di sistema, riuscendo a competere con linguaggi come C e C++.
