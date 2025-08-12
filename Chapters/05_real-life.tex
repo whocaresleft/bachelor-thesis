@@ -16,13 +16,13 @@ di \textit{sudo-rs} promossa da Ubuntu e il sistema operativo \textit{Redox OS}.
 
 \section{Kernel di Windows 11}
 L'adozione di Rust da parte di Microsoft risale al 2023, quando l'azienda ha iniziato a riprogettare sezioni critiche del
-kernel del sistema operativo Windows 11.
+kernel del sistema operativo Windows 11, come riportato dal seguente articolo\cite{microsoft-rust}.
 
 Prima di analizzare quest'adozione, è utile un breve excursus storico sull'evoluzione del kernel Windows, principalmente per comprendere l'importanza di questo cambiamento.
 \begin{framed}
 \noindent Lo sviluppo dei sistemi Microsoft iniziò con un kernel interamente scritto in assembly (\texttt{ASM8086}) nelle prime 
-versioni di \textit{MS-DOS}.\ Con \textit{MS-DOS 3.0} venne introdotto il linguaggio C, ma il primo vero modulo kernel scritto in C
-si ebbe con Windows 1.0 (\textbf{KERNEL.EXE}). Successivamente, C è rimasto il linguaggio principale per il kernel di Windows, con integrazioni C++ nelle
+versioni di \textit{MS-DOS}.\ Con \textit{MS-DOS 3.0} venne introdotto il linguaggio C, ma il primo vero kernel scritto interamente in C
+si ebbe con Windows NT 3.1 (\textbf{KERNEL.EXE}, 1993). Successivamente, C è rimasto il linguaggio principale per il kernel di Windows, con integrazioni C++ nelle
 versioni successive.
 \end{framed}
 \noindent Il passaggio a Rust in Windows 11 è stato motivato da una combinazione di esigenze aziendali e del crescente interesse per il linguaggio Rust, che
@@ -42,5 +42,86 @@ di un colosso tecnologico come Microsoft ha contribuito alla crescita della popo
 \section{Rust for Linux}
 
 \section{Ubuntu: sudo-rs}
+Sebbene non faccia parte del kernel, il comando \texttt{sudo} è uno degli strumenti più importanti e diffusi nel mondo Linux.
+La sua funzione è fondamentale: \textit{Substitute User DO} consente l'esecuzione di comandi con i privilegi di un'altro utente, solitamente più elevati,
+come quelli di un utente ristretto o di super-utente.
+Proprio per questo, è uno degli strumenti più delicati dal punto di vista della sicurezza di un sistema. \hfill
+\vspace{5pt}\\
+\noindent Dalla sua prima introduzione fino a oggi, \texttt{sudo} è stato sviluppato nel linguaggio C. Come riportato in~\cite{ubuntu-sudo-rs}, tuttavia, Canonical ha annunciato che,
+a partire dalla versione \texttt{25.10} di Ubuntu, verrà introdotta una nuova implementazione del comando, scritta interamente in Rust, \texttt{sudo-rs}.
+
+La scelta di Rust deriva dalla necessità di garantire una maggiore sicurezza della memoria e ridurre le vulnerabilità
+tipiche delle implementazioni in C, come accessi a memoria non valida. Il \textit{modello di ownership} di Rust 
+rappresenta una scelta perfetta per questo scopo, eliminando intere classi di errori pur mantenendo prestazioni comparabili a quelle di C. \hfill
+\vspace{10pt}\\
+\noindent Il progetto, guidato dalla \textit{Trifecta Tech Foundation}, punta a migliorare la sicurezza di uno degli strumenti più sensibili dei sistemi Linux.
+Alla sua realizzazione contribuisce anche Todd Miller, storico mantenitore del comando negli ultimi trent'anni, fornendo supporto tecnico e linee guida 
+al team di sviluppo del progetto.
+
+Le principali vulnerabilità della versione attuale riguardano semplici errori di gestione della memoria, in particolare 
+\textit{use-after-free} e accessi oltre i limiti.
+Queste problematiche possono essere sfruttate per eseguire attacchi di tipo \textit{privilege escalation}\footnote{La \textit{privilege escalation} rappresenta uno scenario in cui 
+un utente con permessi limitati (e.g.\ \textit{guest}) ottiene, sfruttando le vulnerabilità di un sistema, privilegi più elevati (e.g.\ \textit{root}).}. \hfill
+\vspace{10pt} \\
+\noindent Gli obiettivi del progetto \texttt{sudo-rs} includono:
+\begin{itemize}
+    \item Migliorare la gestione dell'escaping dei caratteri speciali nella shell, evitando l'esecuzione di comandi indesiderati e potenzialmente malevoli;
+    \item Integrare il controllo sui profili di \texttt{AppArmor};
+    \item Supportare l'utilizzo di \texttt{sudoedit};
+    \item Garantire retrocompabitilità con kernel precedenti alla versione 5.9, come Ubuntu \texttt{20.04 LTS}.\ 
+\end{itemize}
+La filosofia del gruppo di sviluppo segue il principio \textit{`less is more'}: evitare un eccesso di funzionalità iniziali per ridurre la complessità e il rischio di
+introdurre errori logici da risolvere in seguito.
+
+Per questo motivo, \texttt{sudo-rs} non mira a essere un rimpiazzo totale di \texttt{sudo}: molte feature, specialmente quelle meno utilizzate o considerate meno importanti potrebbero venire non implementate inizialmente. \hfill
+\vspace{7pt} \\
+\noindent Il nuovo comando è già disponibile per gli utenti che desiderano testarlo\footnote{È possibile installare il comando tramite il package manager \texttt{apt}, cercando \texttt{rust-sudo-rs}; successivamente, sarà disponibile come `\texttt{sudo-rs}'.} e fornire feedback alla comunità.
+
+Come nota finale, Canonical garantisce che la versione originale in C del comando continuerà a essere mantenuta e distribuita,
+così da lasciare all'utente la libertà di scegliere quale versione adottare, in base alle proprie preferenze o esigenze.
 
 \section{Redox OS}
+\texttt{Redox OS} rappresenta una pietra miliare per il linguaggio Rust, in particolar modo nell'ambito della programmazione di sistema.
+Redox, come riportato dal sito ufficiale~\cite{redox-os}, è un sistema operativo general purpose Unix-like basato su microkernel; molti sistemi operativi rientrano in questa categoria (come Minix o BlackBerry QNX),
+ma ciò che distingue Redox risiede nell'implementazione, interamente in Rust. 
+
+La scelta di usare solamente Rust ha l'obiettivo di mettere alla luce le capacità pratiche del linguaggio 
+nello sviluppo sia di (micro)kernel che di programmi general purpose, fornendo un'alternativa completa a Linux o BSD.\hfill
+\vspace{7pt} \\
+\noindent Il progetto Redox ha riscontrato successo grazie a una combinazione di design basato su microkernel,
+impiego di Rust, compatibilità con POSIX e con la maggior parte dei programmi Linux/BSD grazie alla propria libreria C (anch'essa sviluppata in Rust).
+
+\paragraph{Design basato su microkernel}
+Un microkernel è un insieme di software minimale che offre i meccanismi necessari per implementare un sistema operativo: il microkernel da solo
+non è sufficiente, è necessario integrare moduli aggiuntivi per ricoprire le funzionalità di un sistema operativo.\ 
+
+Questo permette il caricamento, la modifica e la rimozione di moduli a runtime, senza la necessità di riavviare il sistema come conseguenza di ogni cambiamento.
+Inoltre, in quanto i moduli sono esterni al microkernel, essi vivono nello spazio utente, garantendo isolamento dei bug: anche se un intero modulo
+andasse in crash, non avrebbe conseguenze sul resto del sistema\footnote{Questo rappresenta uno dei maggiori vantaggi dell'approccio microkernel. Non vi è il rischio che l'intero sistema si corrompa in seguito al crash di una singola applicazione o modulo.} (il kernel non risentirebbe del crash).
+
+\paragraph{Scrittura in Rust}
+Redox trae beneficio dai vari aspetti caratteristici del linguaggio, nonché da molte delle garanzie offerte:
+\begin{itemize}
+    \item Il \textit{modello di ownership} impone regole che prevengono la maggior parte di errori legati alla memoria, come \textit{null reference}, \textit{use-after-free}, \textit{unfreed memory} e \textit{double free}, nonché \textit{race condition};
+    \item Il \textit{Borrow Checker} vieta la condivisione non sicura di risorse, imponendo vincoli rigidi per garantire l'integrità dei dati condivisi da più thread o processi;
+    \item L'utilizzo di astrazioni sicure come \texttt{Option<T>} e \texttt{Result<T,E>} obbliga il programmatore a gestire esplicitamente sia il successo sia l'eventuale fallimento di un'operazione, evitando accessi a dati non validi;
+    \item Tutti questi meccanismi, uniti alla sintassi restrittiva del linguaggio, eliminano classi intere di bug, lasciando solo quelli legati alla logica applicativa.
+\end{itemize}
+Sia il microkernel che i vari driver sono implementati interamente in Rust, sfruttando le caratteristiche sopra citate e senza 
+richiedere un ulteriore sforzo per garantire la \textit{thread-safety} o la \textit{memory-safety}\footnote{È richiesto uno sforzo maggiore solo durante la fase iniziale dello sviluppo, ma una volta raggiunta la compilazione, si ha la garanzia che la memoria e la concorrenza sono gestite senza incoerenze.}.
+
+\paragraph{Compatibilità con POSIX}
+Redox mira a essere compatibile con la maggior parte delle applicazioni Linux e, più in generale, a rispettare lo standard \texttt{POSIX}.\ 
+Tale compatibilità non è di tipo binario, ma è ottenuta a livello di codice sorgente: in molti casi è sufficiente ricompilare l'applicazione per 
+renderla eseguibile su Redox.
+
+Questo risultato è reso possibile da \texttt{relibc}, la libreria C di Redox, scritta interamente in Rust per mantenere coerenza con la filosofia del progetto.
+Grazie a \texttt{relibc}, Redox supporta già numerose applicazioni fondamentali, tra cui \texttt{GNU bash}, \texttt{Git}, \texttt{Ffmpeg}, \texttt{GCC} e \texttt{LLVM}, rendendolo
+potenzialmente utilizzabile anche da un utente finale.
+
+\paragraph{Conclusione}
+È necessario osservare che Redox, nonostante sia nato come sistema operativo general purpose, è ancora in fase di sviluppo, non ancora 
+maturo per un utilizzo quotidiano, specialmente se paragonato a colossi del calibro di Windows, MacOS o Ubuntu, i quali forniscono una buona esperienza utente già `\textit{out of the box}'.
+
+Ciononostante, Redox costituisce una dimostrazione concreta della maturità e dell'usabilità di Rust per lo sviluppo di sistemi operativi completi, confermandone
+l'applicabilità ben oltre la teoria.
