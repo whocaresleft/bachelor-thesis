@@ -11,7 +11,7 @@ nel contesto programmazione di sistema, con particolare attenzione alle
 Successivamente Rust verrà confrontato con C sulla base degli aspetti analizzati
 , per valutare come Rust possa presentare un'alternativa valida sul piano teorico.
 
-Nel capitolo~\ref{cap:05}, `\textit{<inserire nome>}', l'analisi verrà spostata sul piano pratico, 
+Nel capitolo cinque: `\textit{Progetti e applicazioni reali}'~\ref{cap:05}, l'analisi verrà spostata sul piano pratico, 
 esplorando progetti concreti, che mostrano le potenzialità di Rust nella programmazione di basso livello. \hfill
 \vspace{20pt}\\
 \noindent Nel contesto dei sistemi operativi, quali lo sviluppo di kernel, driver o componenti embedded i linguaggi tradizionalmente dominanti
@@ -575,7 +575,7 @@ Questo comportamento rappresenta un esempio di \textit{undefined behaviour}, com
 dall'immagine~\ref{c:access-after-free-exec}. \hfill
 \vspace{12pt}\\
 \noindent Per osservare come Rust gestisce questa problematica, si consideri il seguente esempio, il quale estende il listato~\ref{rust:dangling-pointer}:
-\begin{lstlisting}[language=Rust, caption={Tentativo di access after free in Rust}, label={rust:access-after-free}]
+\begin{lstlisting}[language=Rust, caption={Tentativo di \textit{access after free} in Rust}, label={rust:access-after-free}]
 fn main() {
     let _ref: &u32;
     {
@@ -819,8 +819,10 @@ complesse e al runtime minimo richiesto.
 
 Rust, d'altra parte, mira a garantire la sicurezza della memoria senza compromettere le prestazioni, puntando a fornire velocità d'esecuzione paragonabili a C e C++. \hfill
 \vspace{10pt}\\
-\noindent Per offrire un confronto concreto, vengono riportati i risultati tratti da \textit{The Computer Language Benchmarks Game}\cite{benchmarksgame}, un progetto che
-confronta le prestazioni di diversi linguaggi di programmazione nell'esecuzione di algoritmi comuni. Il confornto si basa su quattro parametri:
+\noindent Per offrire un confronto concreto, vengono riportati i risultati tratti da \textit{The Computer Language Benchmarks Game}\cite{benchmarksgame}
+\footnote{Nel sito vengono raccolti i risultati dell'esecuzione di vari algoritmi sviluppati in diversi linguaggi di programmazione. Il sito potrebbe variare nel tempo e
+i risultati riportati nella trattazione potrebbero non essere più i migliori e peggiori (data di riferimento 2025-07-18)}, un progetto che
+confronta le prestazioni di diversi linguaggi di programmazione nell'esecuzione di algoritmi comuni. Il confronto si basa su quattro parametri:
 \begin{itemize}
     \item \textbf{secs}: tempo di esecuzione totale (\textit{wall-clock time});
     \item \textbf{cpu secs}: tempo effettivo utilizzato dalla CPU, trascurando attese dovute a I/O e context switch;
@@ -926,7 +928,7 @@ tutti elementi che possono rendere il linguaggio più verboso e complesso rispet
 
 \subsubsection{Annotazioni di lifetime}
 Una delle principali differenze tra Rust e C è dovuta alla presenza del \textit{modello di ownership}, che impone annotazioni di \textit{lifetime} nei casi in cui non siano deducibili implicitamente.
-Come già accennato nel capitolo~\ref{cap:03}, queste permettono al \textit{Borrow Checker} di determinare la validità di un prestito nel tempo, rifiutando 
+Come già accennato nel capitolo tre: `\textit{Sistemi Operativi}'~\ref{cap:03}, queste permettono al \textit{Borrow Checker} di determinare la validità di un prestito nel tempo, rifiutando 
 codice che viola le annotazioni.
 
 Queste annotazioni introducono un livello ulteriore di complessità, sia sintattica che contettuale: il programmatore deve specificare quanto a lungo
@@ -1009,7 +1011,7 @@ Questo meccanismo, per quanto flessibile, richiede controlli rigorosi da parte d
     \item un puntatore \texttt{void*} non memorizza informazioni sulla dimensione del valore puntato, rendendo necessaria la conoscenza esplicita del tipo (solitamente memorizzandone la dimensione);
     \item le operazioni di accesso, sia in lettura che scrittura, devono essere effettuate tramite funzioni delicate come \texttt{memcpy}, in quanto non è possibile dereferenziare direttamente un puntatore \texttt{void*}.
 \end{itemize}
-Il listato~\ref{c:generics} riporta un'estratto da un'implementazione in C di un nodo di una lista generica. L'implementazione completa è disponibile sulla piattaforma Github\cite{github-ds-repo}\footnote{Disponibile nel repository, \texttt{C-data-structures}, personale del candidato, seguendo il percorso: \texttt{src/linear/}. Alcuni commenti sono stati rimossi o spostati per ragioni di spazio.}.
+Il listato~\ref{c:generics} riporta un'estratto da un'implementazione in C di un nodo di una lista generica. L'implementazione completa è disponibile sulla piattaforma Github\cite{github-ds-repo}\footnote{Disponibile nel repository, \href{https://github.com/whocaresleft/C-data-structures}{\texttt{C-data-structures}}, personale del candidato, seguendo il percorso: \texttt{src/linear/}. Alcuni commenti sono stati rimossi o spostati per ragioni di spazio.}.
 \begin{lstlisting}[language=C, float, caption={Programmazione generica in C}, label={c:generics}]
 typedef struct clinkedlist {
 	node* tail;

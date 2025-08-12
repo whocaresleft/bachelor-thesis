@@ -1,4 +1,46 @@
 % !TEX root = ../Thesis.tex
 
-\chapter{Real life?}\label{cap:05}
-to be done
+\chapter{Progetti e applicazioni reali}\label{cap:05}
+
+In questo capitolo verranno presentati progetti concreti che dimostrano
+come Rust possa costituire una scelta valida non solo in termini teorici, ma anche nella pratica per lo sviluppo 
+di basso livello quali driver, kernel e addirittura sistemi operativi completi.
+
+I progetti analizzati sono in costante sviluppo ed evoluzione;
+le informazioni riportate in questa trattazione sono aggiornate ad Agosto 2025, ma potrebbero subire
+variazioni nel tempo.
+
+Tra le applicazioni più rilevanti sono presenti: l'integrazione di Rust nel kernel di Windows 11,
+il progetto \textit{Rust for Linux} (\textit{RfL}) con i relativi sottoprogetti, l'implementazione 
+di \textit{sudo-rs} promossa da Ubuntu e il sistema operativo \textit{Redox OS}.\ 
+
+\section{Kernel di Windows 11}
+L'adozione di Rust da parte di Microsoft risale al 2023, quando l'azienda ha iniziato a riprogettare sezioni critiche del
+kernel del sistema operativo Windows 11.
+
+Prima di analizzare quest'adozione, è utile un breve excursus storico sull'evoluzione del kernel Windows, principalmente per comprendere l'importanza di questo cambiamento.
+\begin{framed}
+\noindent Lo sviluppo dei sistemi Microsoft iniziò con un kernel interamente scritto in assembly (\texttt{ASM8086}) nelle prime 
+versioni di \textit{MS-DOS}.\ Con \textit{MS-DOS 3.0} venne introdotto il linguaggio C, ma il primo vero modulo kernel scritto in C
+si ebbe con Windows 1.0 (\textbf{KERNEL.EXE}). Successivamente, C è rimasto il linguaggio principale per il kernel di Windows, con integrazioni C++ nelle
+versioni successive.
+\end{framed}
+\noindent Il passaggio a Rust in Windows 11 è stato motivato da una combinazione di esigenze aziendali e del crescente interesse per il linguaggio Rust, che
+iniziò a essere popolare proprio in questo periodo, grazie al modello offerto: garantire la sicurezza della memoria senza sacrificare le prestazioni.
+
+In particolare, Rust ha permesso a Microsoft di affrontare due aspetti fondamentali:
+\begin{itemize}
+    \item \textbf{Sicurezza della memoria}: Windows ha una storia documentata alle spalle di errori legati alla memoria, quali \textit{null reference}, \textit{buffer overflow}, scritture illegali e altri. Il \textit{modello di ownership} offerto da Rust consente di prevenire queste problematiche già a tempo di compilazione;
+    \item \textbf{Gestione della concorrenza}: Data la complessità Windows, anche gli errori di concorrenza sono frequenti. Il \textit{Borrow Checker} di Rust, insieme all'uso di \textit{smart pointers} per la condivisione dei dati, garantisce integrità e un uso corretto delle risorse condivise, eliminando errori quali \textit{race condition}.
+\end{itemize}
+Va sottolineato che, ad oggi, si tratta di un'adozione parziale: il kernel di Windows 11 è tuttora scritto prevalentemente in C, con alcune porzioni in C++.
+L'obiettivo dichiarato di Microsoft è intervenire sulle sezioni chiave del kernel e sulle nuove funzionalità, valutando caso per caso l'impiego di Rust.
+
+Nonostante si tratti di un'adozione parziale, questa scelta rappresenta un traguardo significativo per Rust: guadagnare la fiducia
+di un colosso tecnologico come Microsoft ha contribuito alla crescita della popolarità del linguaggio, specialmente nel panorama della programmazione di sistema.
+
+\section{Rust for Linux}
+
+\section{Ubuntu: sudo-rs}
+
+\section{Redox OS}
