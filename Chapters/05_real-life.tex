@@ -40,6 +40,103 @@ Nonostante si tratti di un'adozione parziale, questa scelta rappresenta un tragu
 di un colosso tecnologico come Microsoft ha contribuito alla crescita della popolarità del linguaggio, specialmente nel panorama della programmazione di sistema.
 
 \section{Rust for Linux}
+Il progetto \textit{Rust for Linux} nasce con l'obiettivo di integrare il supporto a Rust 
+come linguaggio di programmazione utilizzabile all'interno del kernel Linux, dimostrandone l'idoneità nello 
+sviluppo di componenti di basso livello, principalmente driver, tradizionalmente 
+implementati in C.
+
+L'interesse verso Rust deriva principalmente dalle garanzie offerte dal linguaggio sotto gli aspetti di \textit{memory-safety} e \textit{thread-safety} senza
+costi di esecuzione aggiuntivi. Grazie al \textit{modello di ownership} intere classi di errori vengono completamente prevenute a livello di compilazione,
+come accessi a memoria non inizializzata, memoria non liberata, \textit{double free} a altri ancora, comuni nei sistemi sviluppati in C\footnote{Il \textit{modello di ownership} viene 
+esposto nel capitolo tre~\ref{cap:03}, mentre nel capitolo quattro~\ref{sub:mem-safe} è possibile osservare quali errori vengono effettivamente 
+eliminati grazie ad esso.}. \hfill 
+\vspace{7pt} \\
+\noindent Il progetto raccoglie un insieme di contributi al kernel, in gran parte rappresentato da driver per dispositivi fisici
+(schede di rete, NVMe) e virtuali (GPU virtuali), sviluppati interamente in Rust.
+
+La documentazione ufficiale è consultabile dal sito di Rust for Linux~\cite{rust-for-linux}. Inoltre, è opportuno osservare che il 
+progetto è in continua evoluzione, le informazioni riportate in questa trattazione sono aggiornate ad Agosto 2025, ma potrebbero variare nel futuro. \hfill
+\vspace{5pt} \\
+\noindent Per comprendere l'importanza di questo progetto, è utile un breve excursus sull'evoluzione dei linguaggi supportati dal kernel linux.
+\begin{framed}
+\noindent Il kernel Linux venne rilasciato inizialmente nel 1991 da Linus Torvalds ed era quasi interamente scritto in C,
+con alcune sezioni in assembly. Questa situazione rimase 
+invariata fino al 2007, quando venne l'integrazione di
+C++ nel kernel. 
+
+Tuttavia, l'idea venne rifiutata da Torvalds stesso,
+contrario all'utilizzo di un linguaggio considerato meno trasparente e più complesso rispetto a C,
+ come riportato dal seguente articolo di \textit{Zeus News}~\cite{linus-cpp}, dove vengono esposte alcune motivazioni specifiche a riguardo.
+
+ Solo nel 2022, con la versione 6.1, venne aggiunto un primo supporto sperimentale a Rust, sufficiente per permettere agli sviluppatori
+di iniziare a scrivere codice Rust nel kernel e testarne l'integrazione.
+\end{framed}
+\noindent Al giorno d'oggi il kernel Linux consente lo sviluppo di moduli e driver, sia
+in C che in Rust, definiti \textit{out-of-tree}: moduli sviluppati e mantenuti separatamente dal codice sorgente del kernel,
+spesso proprietari o specifici per hardware particolare. \hfill
+\vspace{7pt} \\
+\noindent Il progetto \textit{Rust for Linux} si concentra soprattutto sullo sviluppo di moduli \textit{in-tree}, inclusi direttamente nella \textit{mainline} del kernel (i.e.\  incluse nel sorgente del kernel).
+Tuttavia, il progetto raccoglie anche moduli \textit{out-of-tree}, permettendo agli sviluppatori un ambiente sicuro per sperimentare e validare 
+soluzioni prima di proporle per un'inclusione ufficiale nella \textit{mainline}.\hfill 
+\vspace{15pt}\\
+\noindent Un concetto chiave introdotto dal progetto è quello di \textit{reference driver} (driver di riferimento), ovvero implementazioni in Rust che possono essere integrate 
+nei sottosistemi senza sostituire i driver C esistenti.
+
+\noindent Questi driver hanno diverse funzioni:
+\begin{itemize}
+    \item Definire astrazioni sicure per i nuovi driver, evitando la riscrittura o duplicato codice esistente;
+    \item Fornire un modello di riferimento per gli sviluppatori C, mostrando come un driver equivalente possa essere realizzato in Rust;
+    \item Sfruttare le infrastrutture già presenti \textit{in-tree} per preparare i sottosistemi a un'integrazione graduale e progressiva di Rust;
+    \item Facilitare l'apprendimento graduale del linguaggio da parte degli sviluppatori del kernel;
+    \item Valutare la convenienza dell'adozione: verificare quanta parte del codice possa essere scritta in modalità \texttt{safe}, quanti bug del driver originale C verrebbero effettivamente eliminati e quale sia l'impatto sulla manutenzione.
+\end{itemize}
+In molti casi, un \textit{reference driver} può essere semplicemente un prototipo o un banco di prova, più che un driver destinato all'uso in produzione.
+
+\subsection{Moduli in mainline}
+Come precedentemente accennato, i moduli e driver \textit{in mainline} fanno ufficialmente parte del kernel: sono inclusi nel 
+sorgente e compilati insieme ad esso, risultando disponibili senza necessità di installazioni aggiuntive.
+La categoria \textit{in mainline} di \textit{Rust for Linux} comprende principalmente driver per schede di rete (\textit{Network Interface Cards}, \textbf{AMCC QT2025} e \textbf{ASIX}) e per GPU (\textbf{Nova} e \textbf{Tyr}), oltre ad 
+alcuni moduli di utilità.
+
+\paragraph{Driver per NIC}
+Due dei principali moduli \textit{in-tree} del progetto sono driver per dispositivi di rete, \textbf{AMCC QT2025 PHY} e \textbf{ASIX PHY}.\ 
+
+Il primo è un driver per l'omonimo dispositivo (transreceiver \textbf{AMCC QT2025}) e fornisce un'interfaccia verso lo 
+stack di rete del kernel, facilitando l'interazione tra 
+il dispositivo e il sistema operativo e la gestione delle funzionalità di rete.
+È stato integrato nel kernel nella versione \texttt{6.12}.
+
+Il secondo è destinato ai dispositivi Ethernet del produttore \textbf{ASIX}, ma ha finalità principalmente dimostrative:
+è sviluppato come \textit{reference driver}, per fornire un esempio di implementazione di un driver \texttt{PHY} (layer fisico dello stack \texttt{ISO/OSI}) in Rust.
+È stato introdotto nella versione \texttt{6.8}.
+
+\paragraph{Driver per GPU}
+
+\paragraph{Driver per Null block}
+Il \textit{Null Block device} (\texttt{/dev/null}) è un dispositivo a blocchi virtuale utilizzato principalmente per test e benchmarking: scarta tutti i dati scritti e restituisce \texttt{EOF} se si legge da esso, senza usufruire di memoria o spazio di archiviazione fisico.
+
+Il driver attuale, \texttt{null\_blk}, è scritto interamente in C e ha una nota storia di vulnerabilità legate alla gestione della memoria: un'analisi dei 
+commit relativi al driver mostra che circa il \texttt{41\%} dei fix sono dovuti a errori di sicurezza della memoria\cite{null-blk}.
+Ciò lo ha reso un ottimo candidato per un'implementazione in Rust.
+
+A questo scopo, è stato sviluppato \texttt{rnull}, un driver scritto interamente in \texttt{safe} Rust, con porzioni minime di codice \texttt{unsafe}, incapsulate in astrazioni sicure
+ per interagire con le \texttt{API C} del kernel.
+
+ Attualmente \texttt{rnull} replica gran parte delle funzionalità di \texttt{null\_blk}, ma non è ancora completo e manca di alcune feature presenti nell'implementazione originale.
+
+\paragraph{Generatore di codici QR per DRM Panic}
+Questo modulo è destinato ai sottosistemi \textit{Direct Rendering Manager} (\textbf{DRM}) e ha lo scopo di semplificare l'analisi degli 
+\textit{stack trace} generati in seguito a un \textit{kernel panic}.
+
+Il problema di base è che i messaggi di errore del \textit{DRM} possono essere molto lunghi e poco pratici da copiare manualmente.
+Il modulo genera un codice QR, scansionabile con uno smartphone, contenente le informazioni sull'errore, così da ottenere 
+rapidamente i dettagli necessari all'analisi.
+
+L'implementazione non richiede memoria o spazio di archiviazione aggiuntivi: sfrutta lo spazio 
+libero nel buffer già riservato al processo per memorizzare il codice QR.\ 
+È stato integrato nel kernel nella versione \texttt{6.12}.
+
+\subsection{Moduli outside mainline}
 
 \section{Ubuntu: sudo-rs}
 Sebbene non faccia parte del kernel, il comando \texttt{sudo} è uno degli strumenti più importanti e diffusi nel mondo Linux.
