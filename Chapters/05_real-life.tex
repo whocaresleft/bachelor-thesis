@@ -92,7 +92,7 @@ nei sottosistemi senza sostituire i driver C esistenti.
 \end{itemize}
 In molti casi, un \textit{reference driver} può essere semplicemente un prototipo o un banco di prova, più che un driver destinato all'uso in produzione.
 
-\subsection{Moduli in mainline}
+\subsection{Moduli \textit{in mainline}}
 Come precedentemente accennato, i moduli e driver \textit{in mainline} fanno ufficialmente parte del kernel: sono inclusi nel 
 sorgente e compilati insieme ad esso, risultando disponibili senza necessità di installazioni aggiuntive.
 La categoria \textit{in mainline} di \textit{Rust for Linux} comprende principalmente driver per schede di rete (\textit{Network Interface Cards}, \textbf{AMCC QT2025} e \textbf{ASIX}) e per GPU (\textbf{Nova} e \textbf{Tyr}), oltre ad 
@@ -111,6 +111,24 @@ Il secondo è destinato ai dispositivi Ethernet del produttore \textbf{ASIX}, ma
 È stato introdotto nella versione \texttt{6.8}.
 
 \paragraph{Driver per GPU}
+Tra i moduli \textit{in-tree} rientrano anche due driver per schede grafiche: \textbf{Nova GPU} e \textbf{Tyr GPU}.\ 
+
+\textbf{Nova GPU} è un driver per le schede grafiche NVIDIA a partire dalla seria RTX~2000, concepito come successore dell'attuale \textit{Nouveau}.
+La descrizione dettagliata del driver è riportata nella sezione `\textit{Red Hat: Nova}'~\ref{sec:redhat-nova}.
+
+\textbf{Tyr GPU} è un driver \textit{Direct Rendering Manager} (\textbf{DRM}) per le GPU \textit{Arm Mali} basate su \textit{CSF} (Command Stream Frontend), 
+sviluppato come porting in Rust dell'attuale driver \textit{Panthor} (in C).\ 
+Il progetto ha un team di sviluppo che comprende ingegneri provenienti da \textit{Collabora}, \textit{Arm} e \textit{Google}, e mira a fornire la 
+stessa API per spazio utente attualmente offerta da \textit{Panthor}, così da poter sostituire direttamente il driver nel contesto di \textit{PanVK} (driver Vulkan).
+
+\noindent Lo sviluppo di \textit{Tyr} procede su due rami distinti:
+\begin{itemize}
+    \item \textbf{Upstream}: Attualmente in grado di rilevare GPU su \textit{SoC} (\textit{System-on-Chip}) \texttt{RK3588}, leggere alcune sezioni della ROM della GPU e trasferirle allo spazio utente tramite chiamate API;\ 
+    \item \textbf{Downstream}: Utilizzato come \textit{reference driver} per testare le nuove astrazioni proposte, prima della loro integrazione nella \textit{upstream}. Attualmente è in grado di inviare piccoli pacchetti di lavoro alla GPU.\ 
+\end{itemize}
+Il progetto \textit{Tyr} è iniziato a giugno 2025 e si trova ancora in fare iniziale, instabile e fortemente sperimentale.
+Secondo la documentazione ufficiale (Sezione \textit{Users -- in mainline/Tyr GPU Driver})~\cite{rust-for-linux}, non gestisce ancora il controllo della corrente e implementa funzionalità limitate di recupero dagli errori, 
+ma il team di sviluppo prevede di estenderle nei prossimi mesi.
 
 \paragraph{Driver per Null block}
 Il \textit{Null Block device} (\texttt{/dev/null}) è un dispositivo a blocchi virtuale utilizzato principalmente per test e benchmarking: scarta tutti i dati scritti e restituisce \texttt{EOF} se si legge da esso, senza usufruire di memoria o spazio di archiviazione fisico.
@@ -136,7 +154,60 @@ L'implementazione non richiede memoria o spazio di archiviazione aggiuntivi: sfr
 libero nel buffer già riservato al processo per memorizzare il codice QR.\ 
 È stato integrato nel kernel nella versione \texttt{6.12}.
 
-\subsection{Moduli outside mainline}
+\subsection{Moduli \textit{outside mainline}}
+Oltre a moduli inclusi nella \textit{mainline}, il progetto raccoglie anche sviluppi \textit{outside mainline}, ovvero non integrati direttamente nel kernel: 
+pur essendo compatibili con una determinata versione del kernel, vengono mantenuti e distribuiti separatamente, richiedendo quindi installazioni
+ aggiuntive prima di essere utilizzabili.
+
+In questa categoria rientrano driver per dispositivi di storage (\textbf{NVMe}), GPU proprietarie (\textbf{Apple AGX}), filesystem (\textbf{PuzzleFS}) e moduli per Android.\hfill
+\vspace{7pt}\\
+\noindent Il progetto \textit{Rust for Linux} privilegia lo sviluppo di moduli \textit{in-tree}, ma ciò non rende meno rilevanti quelli \textit{out-of-tree}:
+spesso si tratta di soluzioni pensate per contesti o hardware specifici; per questo, solitamente, la documentazione disponibile può risultare limitata.
+
+\paragraph{Android ashmem}
+\texttt{Ashmem} (\textit{Anonymous Shared Memory Subsystem for Android}) è un allocatore di memoria condivisa per Android, contettualmente simile a 
+\texttt{POSIX SHM} ma con un'API più semplice e basata su file.
+
+È progettato per liberare automaticamente le regioni di memoria condivisa quando il sistema è sotto pressione (ovvero quando la memoria fisica si sta saturando), caratteristica che lo rende particolarmente 
+adatto a dispositivi con risorse limitate.
+
+\paragraph{Driver per Android Binder}
+Questo progetto mira a riscrivere in Rust il driver kernel per il \textbf{Binder} di Android.
+Il \textit{Binder} è un componente fondamentale per la sicurezza e le prestazioni dei sistemi Android: gestisce la \textit{IPC} (\textit{Inter-Process Communication}) all'interno 
+del \textit{sandbox}\footnote{Android isola l'esecuzione delle applicazioni in ambienti detti Sandbox, per cui ogni applicazione ha il proprio ambiente privato per la sua esecuzione, separato dalle altre.} di Android, permettendo la comunicazione tra applicazioni isolate.
+
+La sua natura critica lo rende particolarmente vulnerabile a errori legati alla gestione della memoria, per cui trarrebbe significativi vantaggi 
+dalle garanzie offerte dal \textit{modello di ownership} di Rust, sia intermini di sicurezza che di prestazioni.
+
+\paragraph{Driver per Apple AGX}
+Questo driver è destinato alla GPU \textbf{AGX} di Apple ed è accompagnato da binding \textit{DRM} (\textit{Direct Rendering Manager}) per lo spazio utente.
+Oltre a far parte di \textit{Rust for Linux}, il driver rientra anche nel progetto \textit{Asahi Linux}, il quale mira a portare supporto Linux sulle 
+CPU Apple Silicon.
+
+L'interesse principale verso \textit{AGX} deriva proprio dal contesto di \textit{Asahi}: la documentazione tecnica più dettagliata è presente
+nelle pagine ufficiali di tale progetto~\cite{asahi}.
+
+Attualmente lo sviluppo è sviluppo è focalizzato sull'implementazione di driver per \textit{OpenGL} e \textit{Vulkan} e sul \textit{reverse engineering} del set di istruzioni 
+supportato dalla GPU.\ 
+
+\paragraph{Driver per NVMe}
+Questo driver rappresenta il tentativo di sviluppare un driver \textbf{NVMe PCI} interamente in \texttt{safe} Rust, concepito principalmente come \textit{reference driver}.
+L'obiettivo è dimostrare la fattibilità di astrazioni sicure per dispositivi ad alte prestazioni, oltre che a fornire un esempio concreto per sviluppi futuri.
+
+Allo stato attuale si trova in fase sperimentale e instabile, non adatta a un uso in produzione.
+
+\paragraph{Driver per filesystem PuzzleFS}
+\textbf{PuzzleFS} è un filesystem per container progettato per superare alcune limitazioni dell'attuale stack \textit{OCI} (\textit{Open Container Initiative}).
+Il progetto mira a ridurre la duplicazione dei dati, garantire build riproducibili, supportare il \textit{mounting} diretto e garantire la sicurezza della memoria.
+
+Il driver, scritto in Rust, implementa queste caratteristiche attraverso:
+\begin{itemize}
+    \item \textbf{Riduzione della duplicazione}: utilizzo dell'algoritmo \textit{FastCDC} per condividere segmenti di memoria tra i vari layer;
+    \item \textbf{Build riproducibili}: definizione di una rappresentazione canonica del formato delle immagini;
+    \item \textbf{Sicurezza della memoria}: ottenuta implicitamente grazie al \textit{modello di ownership} di Rust.
+\end{itemize}
+
+\section{Red Hat: Nova}\label{sec:redhat-nova}
 
 \section{Ubuntu: sudo-rs}
 Sebbene non faccia parte del kernel, il comando \texttt{sudo} è uno degli strumenti più importanti e diffusi nel mondo Linux.
