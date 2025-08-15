@@ -92,7 +92,7 @@ nei sottosistemi senza sostituire i driver C esistenti.
 \end{itemize}
 In molti casi, un \textit{reference driver} può essere semplicemente un prototipo o un banco di prova, più che un driver destinato all'uso in produzione.
 
-\subsection{Moduli \textit{in mainline}}
+\subsection{Moduli in mainline} 
 Come precedentemente accennato, i moduli e driver \textit{in mainline} fanno ufficialmente parte del kernel: sono inclusi nel 
 sorgente e compilati insieme ad esso, risultando disponibili senza necessità di installazioni aggiuntive.
 La categoria \textit{in mainline} di \textit{Rust for Linux} comprende principalmente driver per schede di rete (\textit{Network Interface Cards}, \textbf{AMCC QT2025} e \textbf{ASIX}) e per GPU (\textbf{Nova} e \textbf{Tyr}), oltre ad 
@@ -154,7 +154,7 @@ L'implementazione non richiede memoria o spazio di archiviazione aggiuntivi: sfr
 libero nel buffer già riservato al processo per memorizzare il codice QR.\ 
 È stato integrato nel kernel nella versione \texttt{6.12}.
 
-\subsection{Moduli \textit{outside mainline}}
+\subsection{Moduli outside mainline}
 Oltre a moduli inclusi nella \textit{mainline}, il progetto raccoglie anche sviluppi \textit{outside mainline}, ovvero non integrati direttamente nel kernel: 
 pur essendo compatibili con una determinata versione del kernel, vengono mantenuti e distribuiti separatamente, richiedendo quindi installazioni
  aggiuntive prima di essere utilizzabili.
@@ -207,7 +207,90 @@ Il driver, scritto in Rust, implementa queste caratteristiche attraverso:
     \item \textbf{Sicurezza della memoria}: ottenuta implicitamente grazie al \textit{modello di ownership} di Rust.
 \end{itemize}
 
+\subsection{Impatto del progetto}
+Tra i recenti esempi di integrazione di Rust in progetti esistenti, \textit{Rust for Linux} è senza dubbio quello che ha avuto il maggiore impatto tecnico 
+e mediatico, generando anche un ampio dibattito all'interno della community \textit{open source}.
+
+Il motivo è semplice ma fondamentale: il progetto coinvolge il kernel Linux, cuore di vari sistemi operativi alla base di gran parte 
+dell'infrastruttura digitale odierna, sviluppato e mantenuto da una comunità vasta e con una cultura tecnica consolidata.
+
+A confronto con:
+\begin{itemize}
+    \item \textbf{Kernel di Windows 11}: Windows è un sistema proprietario sviluppato internamente da Microsoft, quindi l'integrazione di Rust non genera lo stesso dibattito pubblico né ha lo stesso impatto sulla community open source;
+    \item \textbf{sudo-rs}: riscrittura in Rust del comando \texttt{sudo}, importante per la sicurezza, ma limitato a un singolo strumento, non all'intero sistema;
+    \item \textbf{Redox OS}:\  sistema operativo scritto interamente in Rust, ma con adozione limitata (è considerato principalmente un progetto `\textit{di nicchia}') rispetto a Linux, il quale è alla base di Android e della maggior parte dei server.
+\end{itemize}
+
+\paragraph{Motivazioni dell'importanza}
+L'integrazione di Rust nel kernel Linux rappresenta il primo tentativo concreto di introdurre un linguaggio con garanzie di sicurezza della memoria nella \textit{mainline} del kernel.
+L'obiettivo è ridurre la classe di vulnerabilità legate a errori di gestione della memoria, mantenendo le prestazioni richieste da un sistema operativo.
+
+L'importanza è amplificata dal fatto che Linux è alla base di una porzione enorme dell'ecosistema tecnologico globale: dai dispositivi mobili Android ai 
+vari server che alimentano servizi cloud e web. Qualsiasi cambiamento strutturale al kernel ha quindi effetti su larga scala.
+
+Infine, si tratta di un cambiamento che rompe una tradizione radicata: dal 1991 il kernel Linux è scritto quasi interamente in C, e in passato 
+altri linguaggi (incluso C++) non sono stati accettati. L'introduzione di Rust non è solo un aggiornamento tecnico, ma anche una 
+modifica della filosofia di sviluppo del progetto.
+
+\paragraph{Conseguenze socio-culturali}
+L'ultima proposta per introdurre un nuovo linguaggio nel kernel risale nel 2007, quando Torvalds rifiutò l'adozione di C++. 
+Questa storia rende l'accettazione, seppure parziale, di Rust un segnale di apertura.
+
+In una prima occasione, Linus Torvalds ha espresso un approccio pragmatico verso Rust, riconoscendo sia le resistenze culturali che i possibili benefici tecnici:
+
+\begin{quote}
+`Rust is a very different thing, and there are a lot of people who are used to the C model. They don’t like the differences, but that’s OK [\ldots] 
+Clearly, some people just don’t like the notion of Rust and having Rust encroach on their area. But we’ve only been doing Rust for a couple of 
+years, so it’s way to early to say Rust is a failure'. \hfill \\
+\emph{-- Linus Torvalds, discussione alla `Linux Kernel Mailing List', 2022}
+\end{quote}
+
+\noindent In un'altra occasione, ha chiarito di non considerare Rust un rimpiazzo totale di C, ma uno strumento aggiuntivo, utile in casi specifici:
+\begin{quote}
+`I do not think Rust will take over the kernel, and I don’t think anybody is even suggesting that. But 
+I do think Rust can be a good tool for some things, and we should use the best tool for the job'. \hfill \\
+\emph{-- Linus Torvalds, conferenza `Linux in the Multiverse', 2024}
+\end{quote}
+
+\noindent Queste dichiarazioni evidenziano due aspetti fondamentali: da un lato, l'esistenza di una divisione culturale tra sviluppatori più legati al modello C e
+sostenitori di Rust; dall'altro, la volontà di valutare Rust su basi pratiche e a lungo termine, senza pregiudizi definitivi e senza trasformarlo in una questione ideologica.
+
 \section{Red Hat: Nova}\label{sec:redhat-nova}
+\textbf{Nova} è un progetto sviluppato dall'azienda Red Hat, parte integrante dell'iniziativa \textit{Rust for Linux}. Si tratta di un driver per \textit{GSP}, un componente 
+presente nelle schede grafiche NVIDIA di nuova generazione, dalla serie RTX~2000 in poi.
+
+Il \textit{GSP} è un componente hardware e firmware integrato nella GPU che consente di gestire quest'ultima come se fosse un sistema embedded.
+Tra le sue funzioni principali si trovano: la gestione dell'alimentazione, la gestione del clock, l'inizializzazione dell'hawdware, lo scheduling delle code e
+il controllo termico. Permette di comunicare con la GPU come se fosse un'entità autonoma interna al sistema, sollevando la CPU da tutte le funzionalità 
+precedentemente elencate. \hfill
+\vspace{10pt} \\
+\noindent Prima dell'introduzione del \textit{GSP}, il driver open source \textit{Nouveau}, sviluppato principalmente tramite \textit{reverse engineering}\footnote{
+NVIDIA è nota per non rilasciare pubblicamente la documentazione delle proprie GPU, principalmente per motivi di marketing, per poter 
+offrire il proprio driver proprietario, maggiormente ottimizzato rispetto alle alternative open source.
+}, soffriva di limitazioni 
+in termini di prestazioni e stabilità rispetto ai driver proprietari forniti da NVIDIA.\ 
+
+Con il \textit{GSP}, molte delle funzionalità ricostruite tramite \textit{reverse engineering} sono ora gestite direttamente da 
+questo processore dedicato, il quale funge da strato di astrazione che permette la comunicazione tra GPU e kernel tramite \textit{IPC}.\ 
+Questo cambiamento strutturale ha reso necessario lo sviluppo di un nuovo driver specifico.\hfill
+\vspace{10pt} \\
+\noindent I motivi che hanno portato Red Hat a scegliere Rust per lo sviluppo di \textit{Nova} sono fondamentalmente tre:
+\begin{itemize}
+    \item \textbf{memory-safety}: il motivo principale risiede nella garanzia di sicurezza della memoria offerta da Rust, così da prevenire in partenza la maggior parte di bug;
+    \item \textbf{thread-safety}: le GPU sono composte da un numero elevato di \textit{thread}, per cui il driver trae vantaggio dalla gestione sicura della concorrenza di Rust;
+    \item \textbf{sperimentazione}: trattandosi di un nuovo driver e non di una riscrittura, vi era l'occasione per sperimentare e testare il linguaggio.
+\end{itemize}
+
+
+Nova è strutturano in due componenti principali:
+\begin{itemize}
+    \item \textbf{nova-core}: esegue le operazioni a basso livello, come l'avvio del \textit{GSP} e l'interazione, tramite quest'ultimo, con l'hawdware;
+    \item \textbf{nova-DRM}:\  fornisce un'interfaccia astratta conforme al \textit{DRM} (\textit{Direct Rendering Manager}), fondamentale per la comunicazione con lo spazio utente.
+\end{itemize}
+Questa architettura modulare permette di combinare \textit{nova-core} con differenti driver grafici, oltre a \textit{nova-DRM}.\ 
+Ad esempio, è possibile impiegare \textit{VFIO} per assegnare la GPU a macchine virtuali, sfruttando la possibilità, supportata a livello firmware, di creare più \textit{vGPU} (GPU virtuali). 
+
+Attualmente, \textit{nova-DRM} è sviluppato principalmente come driver grafico per ambienti virtualizzati, ma può essere utilizzato anche su sistemi fisici, sebbene non sia ottimizzato per questo ambito.
 
 \section{Ubuntu: sudo-rs}
 Sebbene non faccia parte del kernel, il comando \texttt{sudo} è uno degli strumenti più importanti e diffusi nel mondo Linux.
@@ -287,7 +370,7 @@ Questo risultato è reso possibile da \texttt{relibc}, la libreria C di Redox, s
 Grazie a \texttt{relibc}, Redox supporta già numerose applicazioni fondamentali, tra cui \texttt{GNU bash}, \texttt{Git}, \texttt{Ffmpeg}, \texttt{GCC} e \texttt{LLVM}, rendendolo
 potenzialmente utilizzabile anche da un utente finale.
 
-\paragraph{Conclusione}
+\paragraph{Considerazioni su Redox}
 È necessario osservare che Redox, nonostante sia nato come sistema operativo general purpose, è ancora in fase di sviluppo, non ancora 
 maturo per un utilizzo quotidiano, specialmente se paragonato a colossi del calibro di Windows, MacOS o Ubuntu, i quali forniscono una buona esperienza utente già `\textit{out of the box}'.
 
