@@ -376,3 +376,28 @@ maturo per un utilizzo quotidiano, specialmente se paragonato a colossi del cali
 
 Ciononostante, Redox costituisce una dimostrazione concreta della maturità e dell'usabilità di Rust per lo sviluppo di sistemi operativi completi, confermandone
 l'applicabilità ben oltre la teoria.
+
+\section{Considerazioni sui progetti analizzati}
+In questo capitolo, sono stati esaminati diversi progetti concreti 
+che mostrano come Rust possa essere integrato nei sistemi operativi, sia 
+tramite l'aggiunta di moduli specifici che tramite la riscrittura completa di 
+componenti esistenti.
+
+Un aspetto comune di tutti gli esempi presentati è la volontà di affrontare uno dei 
+principali punti deboli dell'uso del C:\ la gestione della memoria.
+Il \textit{modello di ownership} di Rust, come discusso nel capitolo tre: `\textit{Gestione della memoria in Rust}'~\ref{cap:03} 
+e mostrato nel capitolo quattro: `\textit{Sistemi Operativi}'~\ref{cap:04}, riesce a 
+eliminare già a tempo di compilazione molti degli errori legati alla gestione 
+della memoria, i quali in C emergerebbero solo a tempo di esecuzione. \hfill
+\vspace{10pt}\\
+\noindent Le strategie adottate, tuttavia, sono diverse: alcuni progetti optano 
+per un'interazione graduale (come il kernel di Windows 11 e \textit{Rust for Linux}), 
+mentre altri per una sostituzione totale (come \texttt{sudo-rs}). 
+Allo stesso modo, in alcuni casi l'attenzione è posta interamente sulla 
+sicurezza del sistema (Windows 11 e \textit{Rust for Linux}), mentre in altri viene 
+data importanza all'esperienza dell'utente finale (\textit{Redox OS}).
+
+Nel complesso, queste iniziative mostrano come Rust non sia più solamente un 
+linguaggio \textit{promettente} e sperimentale, ma uno strumento concreto, impiegabile
+in contesti reali e complessi, con risultati effettivi nella direzione 
+di maggiore sicurezza e affidabilità dei sistemi.
