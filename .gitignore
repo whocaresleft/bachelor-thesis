@@ -9,5 +9,4 @@
 *.fls
 *.fdb_latexmk
 *.synctex.gz
-*.pdf
 .vscode/settings.json
