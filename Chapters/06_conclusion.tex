@@ -28,3 +28,22 @@ premessa puramente teorica, ma uno strumento concreto già in grado di produrre 
 basso livello, aspetti che verranno approfonditi nella prossima sezione, `\textit{Considerazioni critiche e personali}'~\ref{sec:critique}.
 
 \section{Considerazioni critiche e personali}\label{sec:critique}
+Rust appare in grado di portare benefici significativi nello sviluppo di applicazioni di basso livello e, in particolare, di sistemi operativi.
+Grazie al \textit{modello di ownership}, gli errori di gestione della memoria dinamica vengono di fatto eliminati a tempo di compilazione; inoltre 
+le astrazioni \textit{zero-cost} e l'impiego di \textit{smart pointer} consentono una gestione sicura della concorrenza, prevenendo interamente le \textit{data race}.
+
+Tuttavia, Rust non rappresenta una soluzione magica né priva di limitazioni. La sintassi e il \textit{Borrow Checker} richiedono tempo e dedizione per essere
+padroneggiati, definendo una curva di apprendimento molto più ripida rispetto a linguaggi più permissivi come Python o anche C. A questo va aggiunto il fatto 
+che Rust si limita a prevenire gli errori di gestione della memoria, ma non quelli logici: la correttezza di un algoritmo o di un'implementazione 
+rimane ancora pienamente responsabilità del programmatore. \hfill 
+\vspace{10pt}\\
+\noindent È quindi opportuno, o comunque consigliato, evitare un impiego indiscriminato del linguaggio. Da un lato, utilizzare Rust in contesti 
+dove i suoi vantaggi non si traducono in benefici concreti 
+(e.g.\  un'applicazione che non lavora con una quantità significativa di memoria dinamica)
+rischia di introdurre soltanto complessità;
+dall'altro, utilizzare Rust come se fosse un'altro linguaggio, aggirando o utilizzando in maniera scorretta i costrutti 
+disponibili (per esempio scrivendo ampie porzioni di codice \textit{unsafe}) vanifica gran parte dei 
+principi alla base del linguaggio stesso. \hfill 
+\vspace{10pt}\\
+\noindent La prospettiva più equilibrata è dunque quella di impiegare Rust nei contesti critici, in cui sia le prestazioni che la sicurezza della memoria sono 
+fondamentali e in cui i vantaggi offerti si traducono in maniera concreta, evitando un uso eccessivo o improprio che ne comprometterebbe i punti di forza.

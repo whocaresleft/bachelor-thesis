@@ -31,7 +31,7 @@ iniziò a essere popolare proprio in questo periodo, grazie al modello offerto: 
 In particolare, Rust ha permesso a Microsoft di affrontare due aspetti fondamentali:
 \begin{itemize}
     \item \textbf{Sicurezza della memoria}: Windows ha una storia documentata alle spalle di errori legati alla memoria, quali \textit{null reference}, \textit{buffer overflow}, scritture illegali e altri. Il \textit{modello di ownership} offerto da Rust consente di prevenire queste problematiche già a tempo di compilazione;
-    \item \textbf{Gestione della concorrenza}: Data la complessità Windows, anche gli errori di concorrenza sono frequenti. Il \textit{Borrow Checker} di Rust, insieme all'uso di \textit{smart pointers} per la condivisione dei dati, garantisce integrità e un uso corretto delle risorse condivise, eliminando errori quali \textit{race condition}.
+    \item \textbf{Gestione della concorrenza}: Data la complessità Windows, anche gli errori di concorrenza sono frequenti. Il \textit{Borrow Checker} di Rust, insieme all'uso di \textit{smart pointers} per la condivisione dei dati, garantisce integrità e un uso corretto delle risorse condivise, eliminando errori quali \textit{data race}.
 \end{itemize}
 Va sottolineato che, ad oggi, si tratta di un'adozione parziale: il kernel di Windows 11 è tuttora scritto prevalentemente in C, con alcune porzioni in C++.
 L'obiettivo dichiarato di Microsoft è intervenire sulle sezioni chiave del kernel e sulle nuove funzionalità, valutando caso per caso l'impiego di Rust.
@@ -353,7 +353,7 @@ andasse in crash, non avrebbe conseguenze sul resto del sistema\footnote{Questo 
 \paragraph{Scrittura in Rust}
 Redox trae beneficio dai vari aspetti caratteristici del linguaggio, nonché da molte delle garanzie offerte:
 \begin{itemize}
-    \item Il \textit{modello di ownership} impone regole che prevengono la maggior parte di errori legati alla memoria, come \textit{null reference}, \textit{use-after-free}, \textit{unfreed memory} e \textit{double free}, nonché \textit{race condition};
+    \item Il \textit{modello di ownership} impone regole che prevengono la maggior parte di errori legati alla memoria, come \textit{null reference}, \textit{use-after-free}, \textit{unfreed memory} e \textit{double free}, nonché \textit{data race};
     \item Il \textit{Borrow Checker} vieta la condivisione non sicura di risorse, imponendo vincoli rigidi per garantire l'integrità dei dati condivisi da più thread o processi;
     \item L'utilizzo di astrazioni sicure come \texttt{Option<T>} e \texttt{Result<T,E>} obbliga il programmatore a gestire esplicitamente sia il successo sia l'eventuale fallimento di un'operazione, evitando accessi a dati non validi;
     \item Tutti questi meccanismi, uniti alla sintassi restrittiva del linguaggio, eliminano classi intere di bug, lasciando solo quelli legati alla logica applicativa.

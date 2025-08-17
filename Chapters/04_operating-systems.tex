@@ -382,7 +382,7 @@ Vengono inoltre messi a disposizione due Trait fondamentali: \texttt{Send}, per 
 Il compilatore controlla l'implementazione dei Trait per determinare la validità degli accessi alle risorse, riducendo la probabilità di errori di concorrenza. \hfill
 \vspace{10pt}\\
 \noindent In sintesi, nonostante il modello di Rust possa semprare più complesso o verboso rispetto alla flessibilità offerta dalle librerie C, esso
-garantisce un accesso sicuro alle risorse condivise e, in generale, riesce a prevenire a livello di compilazione una classe di errori comuni: \textit{race condition} e accesso concorrente in scrittura.
+garantisce un accesso sicuro alle risorse condivise e, in generale, riesce a prevenire a livello di compilazione una classe di errori comuni: \textit{data race} (accesso concorrente ai dati di cui almeno uno in scrittura).
 
 \subsubsection{Conclusioni}
 In conclusione, sotto l'aspetto della gestione delle risorse, i due linguaggi offrono strumenti analoghi, ma con differenze non trascurabili.
