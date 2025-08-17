@@ -1,4 +1,98 @@
 % !TEX root = ../Thesis.tex
 
 \chapter{Introduzione}\label{cap:01}
-do be done
+\section{Contestualizzazione}
+Negli ultimi anni il linguaggio di programmazione \textit{Rust} ha suscitato 
+un crescente interesse, attirando l'attenzione di sviluppatori e aziende.
+Una delle motivazioni principali risiede nel suo approccio alla 
+gestione della memoria dinamica, da sempre un tema cruciale nello sviluppo di sistemi di basso livello.
+
+Storicamente, si sono affermati due approcci alla gestione della memoria: 
+quello \textit{manuale}, adottato dai primi linguaggi di programmazione come 
+l'assembly e, successivamente, dal C
+e quello \textit{automatico}, introdotto nel 1959 da Lisp, il primo linguaggio 
+a integrare la \textit{Garbage Collection} (\textit{GC}). \hfill 
+\vspace{8pt}\\
+\noindent L'approccio manuale rende il programmatore interamente responsabile 
+della gestire della memoria, esponendo a una vasta gamma di errori dovuti al 
+fattore umano; la \textit{GC}, invece, solleva il programmatore 
+da tale incarico, ma introduce un overhead non trascurabile e riduce 
+la trasparenza e il controllo sulla memoria.
+
+Nel contesto delle applicazioni di basso livello, soprattutto dei sistemi 
+operativi, controllo diretto e prestazioni sono requisiti fondamentali; 
+per questo, l'approccio manuale rappresenta nella pratica l'unica soluzione percorribile.
+È in questo contesto che si inserisce Rust, un linguaggio sviluppato per 
+garantire una gestione sicura della memoria dinamica, senza impiegare \textit{GC}, e, 
+quindi, senza compromettere le prestazioni. \hfill 
+\vspace{8pt}\\
+\noindent In questa tesi verrà analizzato Rust, con l'obiettivo di comprendere le 
+motivazioni alla base della sua crescente diffusione e di valutare gli 
+strumenti effettivamente offerti.
+
+\section{Argomento}
+La presente ricerca prende in esame la crescente popolarità di Rust nell'ambito
+ della programmazione di basso livello, in particolare nello sviluppo di sistemi operativi.
+
+ Il linguaggio ha una premessa chiara: prevenire interi classi di problemi legati
+ alla gestione della memoria a livello di compilazione, 
+fornendo allo stesso tempo prestazioni, in termini di velocità d'esecuzione, 
+paragonabili a C e C++. \hfill
+\vspace{8pt}\\
+\noindent Vi sono, per tale motivo, varie iniziative che mirano a inserire il linguaggio
+ come valida opzione nello sviluppo di sistemi operativi,
+ma la sua integrazione solleva questioni fondamentali, sia da un punto di vista
+ di tradizione (in quanto storicamente C è un pilastro nello sviluppo di sistemi
+  operativi), che di spesa, in termini di tempo, 
+ per imparare un nuovo linguaggio e per mantenere
+  contemporaneamente due flussi di sviluppo paralleli (C e Rust).
+
+\section{Obiettivi} 
+L'obiettivo principale di questa tesi è offrire una panoramica sul linguaggio 
+di programmazione Rust, esponendo quelle che sono le motivazioni 
+dietro il suo sviluppo e la sua popolarità; successivamente, verrà analizzato 
+l'approccio alternativo di gestione della memoria implementato dal linguaggio. \hfill
+\vspace{7pt}\\
+\noindent Un altro obiettivo è quello di stabilire se, nella teoria, Rust rappresenti una valida 
+opzione per la programmazione di basso livello. Verranno innanzitutto stabiliti i requisiti 
+fondamentali di un linguaggio per lo sviluppo di sistemi operativi; successivamente Rust verrà 
+confrontato con C, standard \textit{de facto} per la programmazione di basso 
+livello, sulla base di gestione delle risorse, della memoria e degli errori, complessità della sintassi e 
+prestazioni, fornendo a tale scopo anche esempi di codice. \hfill
+\vspace{7pt}\\
+\noindent Come aspetto finale, verranno proposti progetti 
+concreti che mostrano come la popolarità del linguaggio non sia solo 
+teorica, ma rappresenti uno strumento pratico e in grado di portare risultati concreti.
+
+L'analisi combina aspetti teorici (descrizione dei meccanismi ed esempi di codice)
+ con lo studio di casi concreti, per evidenziare sia i principi 
+alla base del linguaggio sia le sue applicazioni pratiche. 
+
+\section{Struttura} 
+Questa tesi è strutturata in quattro parti principali, ognuna con il rispettivo 
+capitolo, dal due al cinque. \hfill
+\vspace{7pt}\\
+\noindent Nel capitolo due, `\textit{Rust}'~\ref{cap:02}, verrà fornita una panoramica sul linguaggio di programmazione Rust, con particolare attenzione sulle motivazioni 
+che ne hanno determinato lo svilupop e alla base della sua crescente popolarità negli ultimi anni. \hfill
+\vspace{7pt}\\
+\noindent Nel capitolo tre, `\textit{Gestione della memoria in Rust}'~\ref{cap:03}, verrà esaminato il modello di gestione della memoria implementato da Rust,
+con un'analisi approfondita dei meccanismi alla base; verranno inoltre forniti listati di codice che mostrano esempi del loro funzionamento. \hfill
+\vspace{7pt}\\
+\noindent Nel capitolo quattro, `\textit{Sistemi Operativi}'~\ref{cap:04}, verranno esposti gli strumenti necessari che un linguaggio di programmazione dovrebbe avere per essere impiegato 
+nella programmazione di sistema, con riferimento al linguaggio C. 
+Successivamente, quest'ultimo verrà confrontato con Rust sotto gli aspetti di 
+gestione della memoria, delle risorse e degli errori, complessità del codice e prestazioni, per mostrare come Rust metta a disposizione strumenti 
+fondamentali per essere considerato una valida alternativa, teorica, nella programmazione di sistema. \hfill
+\vspace{7pt}\\
+\noindent Nel capitolo cinque, `\textit{Progetti e applicazioni reali}'~\ref{cap:05}, verranno presentati progetti e applicazioni concreti che mostrano, nella pratica, come 
+Rust non sia solo un linguaggio promettente dal punto di vista teorico, ma rappresenti un valido strumento, capace di ottenere risultati concreti, nella programmazione di basso livello.
+
+\section{Annuncio dei risultati}
+Nella prima parte della tesi, viene evidenziato come l'approccio di gestione della memoria di Rust permetta 
+di prevenire errori critici tipici dei linguaggi con approccio manuale, senza compromettere le prestazioni.
+
+Il confronto con C evidenzia vantaggi in termini di sicurezza e mantenibilità, a fronte di una sintassi più complessa 
+e una curva di apprendimento più ripida e lenta. \hfill 
+\vspace{8pt}\\
+\noindent Nella seconda parte, verranno presi in considerazioni progetti concreti (\textit{Rust for Linux}, \textit{Redox OS}, il kernel di Windows 11 e \texttt{sudo-rs}), 
+evidenziando che Rust è già impiegato in contesti di sistemi operativi e che la sua adozione procede, seppur gradualmente, in maniera significativa. 
