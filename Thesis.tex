@@ -77,6 +77,8 @@ parts,dottedtoc]{classicthesis}
   frame=single,
   captionpos=b
 }
+\renewcommand{\lstlistingname}{Listato}
+\renewcommand{\lstlistlistingname}{Elenco dei listati}
 %--------------------------------------------------------------
 % Layout setting
 %--------------------------------------------------------------
@@ -98,7 +100,7 @@ parts,dottedtoc]{classicthesis}
 
 \lstset{
   	frame=tb,
-	language=Matlab,
+	language=Rust,
   	aboveskip=3mm,
   	belowskip=3mm,
   	showstringspaces=false,
@@ -126,6 +128,12 @@ parts,dottedtoc]{classicthesis}
 \pagenumbering{arabic}
 \tableofcontents
 \listoffigures
+\listoftables
+\cleardoublepage
+\phantomsection
+\addcontentsline{toc}{chapter}{\lstlistlistingname}
+\lstlistoflistings
+
 \cleardoublepage
 \thispagestyle{empty}
 \begin{flushright}

@@ -3,24 +3,26 @@
 \chapter{Rust}\label{cap:02}
 
 In questo capitolo verrà offerta una panoramica sul linguaggio di programmazione Rust, con particolare attenzione riguardo
-le motivazioni che ne hanno determinato lo sviluppo e alla base della sua crescente popolarità.
+le motivazioni che ne hanno determinato lo sviluppo e che sono alla base della sua crescente popolarità.
 
 Verranno inoltre introdotti alcuni concetti fondamentali riguardanti il modello di gestione della memoria di Rust, 
-che costituiranno il fulcro del capitolo tre: `\textit{Gestione della memoria in Rust}'~\ref{cap:03}.
+che costituiranno il fulcro del Capitolo~\ref{cap:03}.
 
 In chiusura, saranno presentati alcuni progetti attuali che evidenziano come Rust rappresenti una valida alternativa nel contesto della programmazione di sistemi.
 
-Le informazioni contenute in questo capitolo sono tratte principalmente dal seguente articolo\cite{rust-2023-interview}.
-\vspace{15pt}\\
-\noindent Rust è un linguaggio di programmazione che, negli ultimi anni, ha ottenuto un'ottima reputazione  
+Le informazioni contenute in questo capitolo sono tratte principalmente da~\cite{rust-2023-interview}.
+
+\section{Contesto e motivazioni}
+Rust è un linguaggio di programmazione che, negli ultimi anni, ha ottenuto un'ottima reputazione  
 tanto tra gli sviluppatori quanto tra le aziende. Il suo principale punto di forza risiede nella 
 capacità, considerata a lungo un ideale solo teorico, di produrre codice che sia simultaneamente 
 ad alte prestazioni e sicuro, in particolare sotto l'aspetto di gestione della memoria.
 
-Che cosa rende Rust \textit{speciale}, rispetto ad altri linguaggi di programmazione? Principalmente, il suo approccio innovativo e alternativo alla gestione della memoria, che evita sia la necessità di gestione manuale da parte dello sviluppatore che la dipendenza da meccanismi di automatici, come \textit{garbage collection}.
-
-\section{Contesto e motivazioni}
-Rust è spesso definito come un linguaggio di basso livello 
+Che cosa rende Rust \textit{speciale}, rispetto ad altri linguaggi di programmazione? Principalmente, 
+il suo approccio innovativo e alternativo alla gestione della memoria, che evita sia la necessità di 
+gestione manuale da parte dello sviluppatore che la dipendenza da meccanismi di automatici, come \textit{garbage collection}. \hfill
+\vspace{15pt}\\
+\noindent Rust è spesso definito come un linguaggio di basso livello 
 che offre astrazioni di alto livello a costo quasi nullo.
 La caratteristica principale che lo distingue dalla maggior parte degli altri linguaggi è il meccanismo
  di gestione della memoria dinamica. 
@@ -28,7 +30,7 @@ La caratteristica principale che lo distingue dalla maggior parte degli altri li
 Tradizionalmente esistono due approcci principali alla gestione della memoria:
 \begin{itemize}
     \item \textbf{Gestione manuale}: tipica di linguaggi considerati di livello più basso, come C e C++, progettati per dare al programmatore il massimo controllo sulle risorse, compresa la memoria. Secondo questo approccio è il programmatore a decidere quando allocare e quando deallocare la memoria dinamica. Il codice risultante generalmente è molto performante in termini di velocità d'esecuzione, ma questo avviene a un costo: non si hanno garanzie sulla sicurezza e sull'integrità della memoria. L'accesso e la gestione diretti della memoria possono portare problemi come \textit{unfreed memory}, \textit{access after free}, \textit{double free}, \textit{dangling pointers} e non solo.
-    \item \textbf{Gestione automatica}: tipica di linguaggi di livello più alto come Java, Python e C\#, progettati per facilitare la gestione della memoria dinamica. È infatti gestita da un componente runtime, noto come \textit{Garbage Collector}: la memoria viene allocata implicitamente quando vengono creati oggetti, e liberata quando questi non sono più validi, in maniera trasparente agli occhi del programmatore. Il \textit{GC} tiene traccia degli oggetti allocati e libera la loro memoria quando questi non sono più referenziati. Il codice prodotto generalmente è libero dalla maggior parte degli errori legati alla memoria, ma questo avviene a un costo: il codice relativo al \textit{GC} viene incluso insieme al codice dell'applicazione, generando un file eseguibile di dimensioni maggiori; inoltre, il \textit{GC} richiede risorse computazionali aggiuntive per compiere la sua funzione, eventualmente rallentando, se non bloccando momentaneamente, l'esecuzione dell'applicazione.
+    \item \textbf{Gestione automatica}: tipica di linguaggi di livello più alto come Java, Python e C\#, progettati per facilitare la gestione della memoria dinamica. È infatti gestita da un componente runtime, noto come \textit{Garbage Collector}~(\textit{GC}): la memoria viene allocata implicitamente quando vengono creati oggetti, e liberata quando questi non sono più validi, in maniera trasparente agli occhi del programmatore. Il \textit{GC} tiene traccia degli oggetti allocati e libera la loro memoria quando questi non sono più referenziati. Il codice prodotto generalmente è privo dalla maggior parte degli errori legati alla memoria, ma questo avviene a un costo: il codice relativo al \textit{GC} viene incluso insieme al codice dell'applicazione, generando un file eseguibile di dimensioni maggiori; inoltre, il \textit{GC} richiede risorse computazionali aggiuntive per compiere la sua funzione, eventualmente rallentando, se non bloccando momentaneamente, l'esecuzione dell'applicazione.
 \end{itemize}
 Non esiste un approccio `oggettivamente corretto': durante lo sviluppo di un'applicazione 
 la scelta sull'approccio utilizzato spesso ricade sulle specifiche esigenze.
@@ -40,13 +42,13 @@ Il creatore di Rust si pose come obiettivo sviluppare un linguaggio che eliminas
 \section{Origine e primo sviluppo}
 Rust nacque inizialmente come progetto personale di Graydon Hoare, sviluppatore presso l'azienda Mozilla, nel 2006.
 Il progetto nacque in seguito alla frustrazione di Hoare per i frequenti malfunzionamenti di software critici, spesso dovuti 
-a problematiche di gestione della memoria\footnote{Secondo quanto riportato nell'articolo\cite{rust-2023-interview}, 
+a problematiche di gestione della memoria\footnote{Secondo quanto riportato in~\cite{rust-2023-interview}, 
 la frustrazione di Hoare era dovuta ai continui crash del software (presumibilmente scritto in C) dell'ascensore del palazzo in cui risiedeva, al ventunesimo piano.}.
 
 L'obiettivo del progetto era molto ambizioso: sviluppare un linguaggio che consentisse di scrivere codice 
 che fosse contemporaneamente \textit{veloce e sicuro}, principalmente sotto l'aspetto di gestione della memoria.
 
-Il nome `\textit{Rust}' fu ispirato da un particolare tipo di fungo (chiamato appunto \textit{Rust}, ruggine in inglese), definito dal creatore 
+Il nome `\textit{Rust}' fu ispirato da un particolare tipo di fungo (chiamato appunto \textit{Rust}, `ruggine' in inglese), definito dal creatore 
 stesso come `\textit{sovra-ingegnerizzati per la sopravvivenza}', metafora per la resilienza e l'attenzione 
 alla sicurezza che il linguaggio mirava a ottenere. \hfill
 \vspace{10pt}\\
@@ -55,8 +57,8 @@ Tuttavia, dopo i primi esperimenti, il team di sviluppo decise di rinunciare com
 e controllo sulla memoria a cui mirava il linguaggio.
 
 Fu così introdotto un nuovo modello, noto come `\textit{modello di ownership}', il quale si fonda 
-sui concetti di possesso (\textit{ownership}) e prestito (\textit{borrowing}). 
-Questo modello definisce regole rigorose sul trasferimento e l'utilizzo dei valori,cercando di prevenire gli errori legati 
+sui concetti di possesso (\textit{ownership}) e prestito (\textit{borrowing}).
+Questo modello definisce regole rigorose sul trasferimento e l'utilizzo dei valori, cercando di prevenire gli errori legati 
 alla memoria già durante la fase di compilazione, senza necessità di un \textit{runtime} dedicato (come il \textit{GC}). \hfill
 \\
 \noindent Questo modello divenne la base del sistema di memoria sicura senza \textit{GC} che ancora oggi contraddistingue Rust.
@@ -102,4 +104,4 @@ ad alte prestazioni e con forti requisiti in termini di sicurezza della memoria.
 \noindent Negli ultimi anni, Rust ha trovato crescente impiego anche a livello di sistema operativo, in particolare in ambito kernel.
 Tra gli esempi più rilevanti si trovano l'integrazione di Rust nel kernel di Windows 11 da parte di Microsoft,
 il progetto \textit{Rust for Linux}, lo sviluppo di driver come \textit{Nova} da parte di Red Hat o il tentativo di rendere
-\textit{sudo} più sicuro da parte di Ubuntu, fino ad arrivare allo sviluppo di interi sistemi operativi in Rust, come \textit{Redox OS}\footnote{Questi progetti verranno esplorati approfonditamente nel capitolo cinque: `\textit{Progetti e applicazioni reali}'~\ref{cap:05}.}.
+\textit{sudo} più sicuro da parte di Ubuntu, fino ad arrivare allo sviluppo di interi sistemi operativi in Rust, come \textit{Redox OS}\footnote{Questi progetti verranno esplorati approfonditamente nel Capitolo~\ref{cap:05}.}.

@@ -16,7 +16,7 @@ di \textit{sudo-rs} promossa da Ubuntu e il sistema operativo \textit{Redox OS}.
 
 \section{Kernel di Windows 11}
 L'adozione di Rust da parte di Microsoft risale al 2023, quando l'azienda ha iniziato a riprogettare sezioni critiche del
-kernel del sistema operativo Windows 11, come riportato dal seguente articolo\cite{microsoft-rust}.
+kernel del sistema operativo Windows 11, come riportato in~\cite{microsoft-rust}.
 
 Prima di analizzare quest'adozione, è utile un breve excursus storico sull'evoluzione del kernel Windows, principalmente per comprendere l'importanza di questo cambiamento.
 \begin{framed}
@@ -48,7 +48,7 @@ implementati in C.
 L'interesse verso Rust deriva principalmente dalle garanzie offerte dal linguaggio sotto gli aspetti di \textit{memory-safety} e \textit{thread-safety} senza
 costi di esecuzione aggiuntivi. Grazie al \textit{modello di ownership} intere classi di errori vengono completamente prevenute a livello di compilazione,
 come accessi a memoria non inizializzata, memoria non liberata, \textit{double free} a altri ancora, comuni nei sistemi sviluppati in C\footnote{Il \textit{modello di ownership} viene 
-esposto nel capitolo tre~\ref{cap:03}, mentre nel capitolo quattro~\ref{sub:mem-safe} è possibile osservare quali errori vengono effettivamente 
+esposto nel Capitolo~\ref{cap:03}, mentre nel Capitolo~\ref{sub:mem-safe} è possibile osservare quali errori vengono effettivamente 
 eliminati grazie ad esso.}. \hfill 
 \vspace{7pt} \\
 \noindent Il progetto raccoglie un insieme di contributi al kernel, in gran parte rappresentato da driver per dispositivi fisici
@@ -66,16 +66,16 @@ C++ nel kernel.
 
 Tuttavia, l'idea venne rifiutata da Torvalds stesso,
 contrario all'utilizzo di un linguaggio considerato meno trasparente e più complesso rispetto a C,
- come riportato dal seguente articolo di \textit{Zeus News}~\cite{linus-cpp}, dove vengono esposte alcune motivazioni specifiche a riguardo.
+ come riportato in~\cite{linus-cpp}, dove vengono esposte alcune motivazioni specifiche a riguardo.
 
- Solo nel 2022, con la versione 6.1, venne aggiunto un primo supporto sperimentale a Rust, sufficiente per permettere agli sviluppatori
+ Solo nel 2022, con la versione \texttt{6.1}, venne aggiunto un primo supporto sperimentale a Rust, sufficiente per permettere agli sviluppatori
 di iniziare a scrivere codice Rust nel kernel e testarne l'integrazione.
 \end{framed}
 \noindent Al giorno d'oggi il kernel Linux consente lo sviluppo di moduli e driver, sia
 in C che in Rust, definiti \textit{out-of-tree}: moduli sviluppati e mantenuti separatamente dal codice sorgente del kernel,
 spesso proprietari o specifici per hardware particolare. \hfill
 \vspace{7pt} \\
-\noindent Il progetto \textit{Rust for Linux} si concentra soprattutto sullo sviluppo di moduli \textit{in-tree}, inclusi direttamente nella \textit{mainline} del kernel (i.e.\  incluse nel sorgente del kernel).
+\noindent Il progetto \textit{Rust for Linux} si concentra soprattutto sullo sviluppo di moduli \textit{in-tree}, inclusi direttamente nella \textit{mainline} del kernel (in altre parole,\  incluse nel sorgente del kernel).
 Tuttavia, il progetto raccoglie anche moduli \textit{out-of-tree}, permettendo agli sviluppatori un ambiente sicuro per sperimentare e validare 
 soluzioni prima di proporle per un'inclusione ufficiale nella \textit{mainline}.\hfill 
 \vspace{15pt}\\
@@ -114,7 +114,7 @@ Il secondo è destinato ai dispositivi Ethernet del produttore \textbf{ASIX}, ma
 Tra i moduli \textit{in-tree} rientrano anche due driver per schede grafiche: \textbf{Nova GPU} e \textbf{Tyr GPU}.\ 
 
 \textbf{Nova GPU} è un driver per le schede grafiche NVIDIA a partire dalla seria RTX~2000, concepito come successore dell'attuale \textit{Nouveau}.
-La descrizione dettagliata del driver è riportata nella sezione `\textit{Red Hat: Nova}'~\ref{sec:redhat-nova}.
+La descrizione dettagliata del driver è riportata nella Sezione~\ref{sec:redhat-nova}.
 
 \textbf{Tyr GPU} è un driver \textit{Direct Rendering Manager} (\textbf{DRM}) per le GPU \textit{Arm Mali} basate su \textit{CSF} (Command Stream Frontend), 
 sviluppato come porting in Rust dell'attuale driver \textit{Panthor} (in C).\ 
@@ -134,7 +134,7 @@ ma il team di sviluppo prevede di estenderle nei prossimi mesi.
 Il \textit{Null Block device} (\texttt{/dev/null}) è un dispositivo a blocchi virtuale utilizzato principalmente per test e benchmarking: scarta tutti i dati scritti e restituisce \texttt{EOF} se si legge da esso, senza usufruire di memoria o spazio di archiviazione fisico.
 
 Il driver attuale, \texttt{null\_blk}, è scritto interamente in C e ha una nota storia di vulnerabilità legate alla gestione della memoria: un'analisi dei 
-commit relativi al driver mostra che circa il \texttt{41\%} dei fix sono dovuti a errori di sicurezza della memoria\cite{null-blk}.
+commit relativi al driver, consultabile presso~\cite{null-blk}, mostra che circa il \texttt{41\%} dei fix sono dovuti a errori di sicurezza della memoria.
 Ciò lo ha reso un ottimo candidato per un'implementazione in Rust.
 
 A questo scopo, è stato sviluppato \texttt{rnull}, un driver scritto interamente in \texttt{safe} Rust, con porzioni minime di codice \texttt{unsafe}, incapsulate in astrazioni sicure
@@ -312,7 +312,7 @@ al team di sviluppo del progetto.
 Le principali vulnerabilità della versione attuale riguardano semplici errori di gestione della memoria, in particolare 
 \textit{use-after-free} e accessi oltre i limiti.
 Queste problematiche possono essere sfruttate per eseguire attacchi di tipo \textit{privilege escalation}\footnote{La \textit{privilege escalation} rappresenta uno scenario in cui 
-un utente con permessi limitati (e.g.\ \textit{guest}) ottiene, sfruttando le vulnerabilità di un sistema, privilegi più elevati (e.g.\ \textit{root}).}. \hfill
+un utente con permessi limitati (ad esempio, \ \textit{guest}) ottiene, sfruttando le vulnerabilità di un sistema, privilegi più elevati (ad esempio, \ \textit{root}).}. \hfill
 \vspace{10pt} \\
 \noindent Gli obiettivi del progetto \texttt{sudo-rs} includono:
 \begin{itemize}
@@ -385,8 +385,8 @@ componenti esistenti.
 
 Un aspetto comune di tutti gli esempi presentati è la volontà di affrontare uno dei 
 principali punti deboli dell'uso del C:\ la gestione della memoria.
-Il \textit{modello di ownership} di Rust, come discusso nel capitolo tre: `\textit{Gestione della memoria in Rust}'~\ref{cap:03} 
-e mostrato nel capitolo quattro: `\textit{Sistemi Operativi}'~\ref{cap:04}, riesce a 
+Il \textit{modello di ownership} di Rust, come discusso nel Capitolo~\ref{cap:03} 
+e mostrato nel Capitolo~\ref{cap:04}, riesce a 
 eliminare già a tempo di compilazione molti degli errori legati alla gestione 
 della memoria, i quali in C emergerebbero solo a tempo di esecuzione. \hfill
 \vspace{10pt}\\
