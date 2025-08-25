@@ -222,7 +222,15 @@ successo o fallire; \texttt{T} ed \texttt{E} sono tipi generici:
     \item \texttt{\textbf{Ok(T)}}: rappresenta la variante di \texttt{Result} che indica successo, contenente il valore, di tipo \texttt{T}, restituito;
     \item \texttt{\textbf{Err(E)}}: è la variante di \texttt{Result} che indica un fallimento, contenente un valore descrittivo dell'errore, di tipo \texttt{E}, generato.
 \end{itemize}
-Si considerino gli esempi nei Listati~\ref{c:file-io} e~\ref{rust:file-io} che mostrano un esempio di operazioni di I/O su file:
+In Rust, il modulo \texttt{std::io} definisce \texttt{Result<T>}, in cui è sufficiente specificare solo il tipo di \texttt{Ok}, in quanto il tipo di \texttt{Err} è sempre \texttt{std::io::Error}.
+Insieme a \texttt{Result}, spesso viene utilizzato l'operatore \texttt{?} per propagare l'errore al chiamante, semplificando la gestione degli errori e migliorando la leggibilità del codice.
+
+Nel caso di `\texttt{main}', il chiamante è il sistema operativo, il quale gestirà l'errore in modo appropriato; però non vi è un valore 
+effettivo da restituire insieme a \texttt{Ok} in caso di successo.
+Per questi scenari, Rust mette a disposizione il tipo `vuoto' \texttt{()}, il quale rappresenta l'assenza di un valore significativo, simile a \texttt{void} in C; 
+di conseguenza in tali contesti viene restituito \texttt{Ok(())} (ovvero, `\textit{successo senza un valore significativ}o'). \hfill
+\vspace{10pt}\\
+\noindent Si considerino gli esempi nei Listati~\ref{c:file-io} e~\ref{rust:file-io} che mostrano un esempio di operazioni di I/O su file:
 \begin{lstlisting}[language=C, caption={I/O su file in C}, label={c:file-io}]
 #include <unistd.h>
 #include <stdlib.h>
@@ -347,7 +355,7 @@ int main(void) {
 \begin{lstlisting}[language=Rust, float, caption={Semplice server TCP in Rust}, label={rust:tcp-serv}]
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write};
-fn main() -> std::io::Result<()> {
+fn main() -> std::io::Result<()> { 
 
     let server = TcpListener::bind("0.0.0.0:50000")?; // Creazione, binding e messa in ascolto
     

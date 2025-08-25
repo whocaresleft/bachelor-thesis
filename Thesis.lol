@@ -15,7 +15,7 @@
 \contentsline {lstlisting}{\numberline {12}{\ignorespaces Gestione ciclo di vita in memoria dinamica C}}{39}{lstlisting.12}%
 \contentsline {lstlisting}{\numberline {13}{\ignorespaces Gestione ciclo di vita in memoria dinamica Rust}}{39}{lstlisting.13}%
 \contentsline {lstlisting}{\numberline {14}{\ignorespaces I/O su file in C}}{41}{lstlisting.14}%
-\contentsline {lstlisting}{\numberline {15}{\ignorespaces I/O su file in Rust}}{41}{lstlisting.15}%
+\contentsline {lstlisting}{\numberline {15}{\ignorespaces I/O su file in Rust}}{42}{lstlisting.15}%
 \contentsline {lstlisting}{\numberline {16}{\ignorespaces Semplice server TCP in C}}{45}{lstlisting.16}%
 \contentsline {lstlisting}{\numberline {17}{\ignorespaces Semplice server TCP in Rust}}{46}{lstlisting.17}%
 \contentsline {lstlisting}{\numberline {18}{\ignorespaces Unfreed memory in C}}{48}{lstlisting.18}%
@@ -29,7 +29,7 @@
 \contentsline {lstlisting}{\numberline {26}{\ignorespaces Buffer overflow in C}}{54}{lstlisting.26}%
 \contentsline {lstlisting}{\numberline {27}{\ignorespaces Buffer overflow in Rust}}{55}{lstlisting.27}%
 \contentsline {lstlisting}{\numberline {28}{\ignorespaces Buffer overread in C}}{56}{lstlisting.28}%
-\contentsline {lstlisting}{\numberline {29}{\ignorespaces Buffer overread in Rust}}{56}{lstlisting.29}%
+\contentsline {lstlisting}{\numberline {29}{\ignorespaces Buffer overread in Rust}}{57}{lstlisting.29}%
 \contentsline {lstlisting}{\numberline {30}{\ignorespaces Uninitialized memory access in C}}{58}{lstlisting.30}%
 \contentsline {lstlisting}{\numberline {31}{\ignorespaces Uninitialized memory access in C}}{59}{lstlisting.31}%
 \contentsline {lstlisting}{\numberline {32}{\ignorespaces Prevenzione di \textit {access after free} tramite \textit {lifetime annotations}}}{65}{lstlisting.32}%
@@ -37,6 +37,6 @@
 \contentsline {lstlisting}{\numberline {34}{\ignorespaces Programmazione generica in C}}{69}{lstlisting.34}%
 \contentsline {lstlisting}{\numberline {35}{\ignorespaces Programmazione generica in Rust}}{70}{lstlisting.35}%
 \contentsline {lstlisting}{\numberline {36}{\ignorespaces Definizione di \textit {macro} in C}}{72}{lstlisting.36}%
-\contentsline {lstlisting}{\numberline {37}{\ignorespaces Utilizzo scorretto di \textit {macro} in C}}{72}{lstlisting.37}%
+\contentsline {lstlisting}{\numberline {37}{\ignorespaces Utilizzo scorretto di \textit {macro} in C}}{73}{lstlisting.37}%
 \contentsline {lstlisting}{\numberline {38}{\ignorespaces Definizione di \textit {macro} dichiarativa in Rust}}{74}{lstlisting.38}%
 \providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 
