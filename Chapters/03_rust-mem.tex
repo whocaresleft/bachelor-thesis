@@ -25,8 +25,8 @@ Nella maggior parte dei linguaggi di programmazione, l'istruzione verrebbe inter
 
 Grazie alle regole di \textit{ownership}, Rust può garantire che la deallocazione della memoria avvenga sempre in modo corretto: poiché ogni valore ha un solo proprietario, non vi è ambiguità riguardo a chi sia responsabile della sua deallocazione. Valgono le seguenti due proprietà:
 \begin{itemize}
-    \item L'esistenza di un proprietario garantisce che non vi siano valori allocati ma non più referenziati;
-    \item L'unicità del proprietario impedisce che un'area di memoria venga deallocata più volte.
+    \item l'esistenza di un proprietario garantisce che non vi siano valori allocati ma non più referenziati;
+    \item l'unicità del proprietario impedisce che un'area di memoria venga deallocata più volte.
 \end{itemize}
 
 \noindent Le regole di \textit{ownership} influenzano diversi aspetti del linguaggio, in particolare la condivisione dei valori tra variabili, l'assegnazione, il passaggio di parametri alle funzioni e operazioni analoghe.
@@ -63,7 +63,7 @@ Nel Listato~\ref{ownership:move-example}, invece, l'assegnamento provoca il tras
 \vspace{10pt}\\
 \noindent Come visto nel Listato~\ref{ownership:move-example}, l'assegnamento di un tipo complesso trasferisce l'\textit{ownership}, rendendo invalido il riferimento originale. Questo comportamento, tuttavia, può risultare limitante in alcuni scenari.
 
-Per ovviare a tale limitazione, Rust fornisce un meccanismo per effettuare copie profonde anche con tipi che utilizzano \texttt{Move}: il comportamento \texttt{Clone}\footnote{La clonazione può introdurre costi in temini di prestazioni, in quanto richiede operazioni di lettura e scrittura nella memoria Heap.}.
+Per ovviare a tale limitazione, Rust fornisce un meccanismo per effettuare copie profonde anche con tipi che utilizzano \texttt{Move}: il \texttt{trait}\footnote{In Rust, un \texttt{trait} (`tratto') è un meccanismo analogo alle interfacce di Java, utilizzato per definire un comportamento comune per le \texttt{struct} e garantire un certo grado di polimorfismo. Nella pratica, un \texttt{trait} è un insieme di funzioni, o meglio, firme di funzioni, raggruppate e identificate con un nome. Le \texttt{struct} che intendono implementare un \texttt{trait} devono definire il corpo di ogni funzione presente in quest'ultimo.} \texttt{Clone}\footnote{La clonazione può introdurre costi in temini di prestazioni, in quanto richiede operazioni di lettura e scrittura nella memoria Heap.}.
 
 \texttt{Clone} permette di definire esplicitamente come realizzare la copia profonda di un valore. L'invocazione del metodo \texttt{clone()} genera un nuovo valore, indipendente dal primo, ma con lo stesso contenuto.
 
@@ -108,10 +108,10 @@ Rust implementa concretamente il \textit{borrowing} tramite il concetto di \text
 \vspace{10pt}\\
 \noindent Il meccanismo che si occupa di controllare che le regole di \textit{borrowing} vengano rispettate è noto come \textit{Borrow Checker}. Le regole di \textit{borrowing} sono le seguenti:
 \begin{itemize}
-    \item In ogni istante può esistere una sola reference mutabile a un dato valore;
-    \item Se esiste almeno una reference immutabile, allora non possono esistere reference mutabili;
-    \item Tutte le reference devono essere sempre valide;
-    \item Una reference mutabile può essere creata solo da una variabile dichiarata come \texttt{mut}.\footnote{Questo vincolo è spesso dato per implicito, ma è fondamentale nel comportamento del \textit{Borrow Checker}.}
+    \item in ogni istante può esistere una sola reference mutabile a un dato valore;
+    \item se esiste almeno una reference immutabile, allora non possono esistere reference mutabili;
+    \item tutte le reference devono essere sempre valide;
+    \item una reference mutabile può essere creata solo da una variabile dichiarata come \texttt{mut}.\footnote{Questo vincolo è spesso dato per implicito, ma è fondamentale nel comportamento del \textit{Borrow Checker}.}
 \end{itemize}
 Si considerino gli esempi nei Listati~\ref{borrow:mut-from-unmut},~\ref{borrow:two-mutable},~\ref{borrow:mut-and-unmut} e~\ref{borrow:dangling-reference}, che illustrano violazioni delle regole di \textit{borrowing}. Essi hanno lo scopo di mostrare come tali comportamenti non siano ammessi dal Borrow Checker, generando errori in fase di compilazione.
 \begin{lstlisting}[language=Rust, caption={Reference mutabile a variabile immutabile}, label={borrow:mut-from-unmut}]

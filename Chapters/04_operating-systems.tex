@@ -97,7 +97,7 @@ commettere errori potenzialmente gravi come:
     \item \textbf{Saturazione della memoria}: un processo che alloca memoria senza controllo o limiti potrebbe esaurire la memoria disponibile. Se lo \textit{swapping} è disponibile, il sistema può degradare drasticamente le prestazioni; in caso non lo fosse, può verificarsi un crash.
 \end{itemize}
 
-\section{Rust contro C}
+\section{Rust e C a confronto}
 Nonostante Rust offra numerose astrazioni di alto livello\footnote{Rust offre delle astrazioni di alto livello definite \textit{zero cost}: feature quali \textit{iteratori}, \textit{generics}, \textit{smart pointers} e meccanismi di \textit{async/await} che vengono compilate in codice dalle prestazioni equivalenti alle controparti \textit{low-level} scritte a mano.}, è progettato come un linguaggio di basso livello, 
 adatto alla programmazione di sistema.
 Per comprendere le capacità di Rust nella programmazione di basso livello, verrà confrontato con il linguaggio C, sulla 
@@ -109,7 +109,7 @@ La maggior parte delle informazioni riportate nella sezione è stata ricavata da
     \item \textbf{Dipendenze runtime} (Come C): Rust, per configurazione predefinita, ha dipendenze runtime minime (principalmente un allocatore di memoria). Tuttavia, come riportato in \textit{The Embedded Rust Book}~\cite{rust-book-embedded}, tramite la direttiva \texttt{\#![no\_std]} è possibile escludere la libreria standard: in questa configurazione, l'unico requisito è un bootstrap che invochi la funzione \texttt{\_start} per fare iniziare l'esecuzione;
     \item \textbf{Accesso diretto alla memoria} (Come C): Tramite una parola chiave, \textit{unsafe}, Rust mette a disposizione cinque operazioni denominate \textit{superpoteri non sicuri}: tra queste si trovano anche la possibilità di dereferenziare un puntatore raw (come in C) e la possiblità di eseguire codice C o assembly;
     \item \textbf{Manipolazione di bit} (Come C): Rust offre lo stesso livello di manipolazione dei singoli bit di C, con un'unica differenza: le operazioni bitwise in Rust sono ben definite, evitando condizioni di \textit{Undefined Behaviour} tramite controlli statici sulle dimensione e tipi degli operandi;
-    \item \textbf{Somiglianza al codice macchina} (Diverso da C): Rust generalmente offre astrazioni di alto livello, inoltre il compilatore può introdurre copie e spostamenti aggiuntivi per preservare le condizioni di ownership o inserire controlli su accessi e indici per gli \textit{slice}\footnote{\texttt{slice} è un tipo primitivo in Rust. Sono un riferimento a una porzione contigua (in memoria) di elementi di una collezione. Non memorizzano dati esplicitamente, si tratta di una vista su dati esistenti.}. Tali comportamenti, pur aumentando la sicurezza, possono produrre un codice meno `trasparente' rispetto alla controparte C;\ 
+    \item \textbf{Somiglianza al codice macchina} (Diverso da C): Rust generalmente offre astrazioni di alto livello, inoltre il compilatore può introdurre copie e spostamenti aggiuntivi per preservare le condizioni di \textit{ownership} o inserire controlli su accessi e indici per gli \textit{slice}\footnote{\texttt{slice} è un tipo primitivo in Rust. Sono un riferimento a una porzione contigua (in memoria) di elementi di una collezione. Non memorizzano dati esplicitamente, si tratta di una vista su dati esistenti.}. Tali comportamenti, pur aumentando la sicurezza, possono produrre un codice meno `trasparente' rispetto alla controparte C;\ 
 \end{itemize}
 Infine, a differenza di C, Rust garantisce l'integrità e la sicurezza della memoria già a tempo di compilazione, prevenendo 
 errori comuni legati alla gestione della memoria grazie al \textit{modello di ownership}. In quanto i controlli effettuati
@@ -122,7 +122,7 @@ del progetto Rust si riferiscono a queste operazioni con l'espressione \textit{U
     \item Dereference di un puntatore raw;
     \item Invocazione di una funzione o metodo non sicuri;
     \item Accesso e modifica di una variabile mutabile e statica;
-    \item Implementazione di un tratto non sicuro;
+    \item Implementazione di un \texttt{trait} non sicuro;
     \item Accesso ai campi di una \textit{union}.
 \end{itemize}
 Le espressioni \textit{Unsafe Rust} e \textit{Unsafe Superpowers} possono risultare fuorvianti: il \textit{Borrow Checker} esegue 
@@ -187,7 +187,7 @@ fn main() {
 
 } // <-- Fine scope: Deallocazione automatica
 \end{lstlisting}
-Entrambi i listati~\ref{c:mem-handle} e~\ref{rust:mem-handle} implementano la stessa logica: viene allocato spazio sufficiente per un intero
+Entrambi i Listati~\ref{c:mem-handle} e~\ref{rust:mem-handle} implementano la stessa logica: viene allocato spazio sufficiente per un intero
 nella memoria heap, successivamente viene inizializzato, stampato e infine deallocato.
 
 Nel caso di C, le varie fasi sono distinte e scollegate: l'allocazione tramite \texttt{malloc}, l'inizializzazione e l'accesso tramite dereferenziazione e la deallocazione tramite \texttt{free}.
@@ -228,7 +228,13 @@ Insieme a \texttt{Result}, spesso viene utilizzato l'operatore \texttt{?} per pr
 Nel caso di `\texttt{main}', il chiamante è il sistema operativo, il quale gestirà l'errore in modo appropriato; però non vi è un valore 
 effettivo da restituire insieme a \texttt{Ok} in caso di successo.
 Per questi scenari, Rust mette a disposizione il tipo `vuoto' \texttt{()}, il quale rappresenta l'assenza di un valore significativo, simile a \texttt{void} in C; 
-di conseguenza in tali contesti viene restituito \texttt{Ok(())} (ovvero, `\textit{successo senza un valore significativ}o'). \hfill
+di conseguenza in tali contesti viene restituito \texttt{Ok(())} (ovvero, `\textit{successo senza un valore significativo}'). \hfill
+
+Un altro aspetto fondamentale del linguaggio è quello dei \texttt{panic}, ovvero un ulteriore meccanismo impiegato nella gestione degli errori.
+Dal punto di vista esterno, sono molto simili alle eccezioni di Java, ovvero causano l'interruzione dell'esecuzione.
+Tuttavia, internamente al processo, i \texttt{panic} procedono in maniera leggermente diversa rispetto alle eccezioni, causando uno \textit{stack unwinding}\footnote{Conviene sottolineare che, anche in Java, si verifica uno \texttt{stack unwinding}, in cui viene percorso lo stack delle chiamate e, contemporaneamente, vengono marcati tutti gli oggetti come non referenziati. Anche questo provoca la deallocazione della memoria; tuttavia, non vi è garanzia riguardo le altre possibili risorse allocate (per esempio, un file aperto potrebbe rimanere tale). In Rust, la maggior parte delle strutture che allocano risorse, definiscono \texttt{drop} in maniera tale da liberarle; di conseguenza, anche in presenza di un \texttt{panic}, verrebbero deallocate correttamente.}:
+quando viene generato un \texttt{panic}, Rust percorre lo stack delle chiamate delle funzioni, invocando \texttt{drop} su ogni \textit{owner} presente. Questo permette 
+una gestione sicura perfino degli errori improvvisi, liberando tutte le risorse allocate al momento dell'errore\footnote{Questo, tuttavia, non è sempre vero in pratica. Oltre allo \textit{stack unwinding}, Rust permette di selezionare \textit{abort} come \textit{gestore di \texttt{panic}}. In questa configurazione, il processo viene terminato senza liberare le risorse, con un comportamento analogo a un \texttt{exit(FAILURE)} improvviso in C. La modifica del gestore di \texttt{panic} deve avvenire in maniera esplicita, in quanto Rust utilizza, di default, \textit{stack unwinding}.}.
 \vspace{10pt}\\
 \noindent Si considerino gli esempi nei Listati~\ref{c:file-io} e~\ref{rust:file-io} che mostrano un esempio di operazioni di I/O su file:
 \begin{lstlisting}[language=C, caption={I/O su file in C}, label={c:file-io}]
@@ -270,15 +276,15 @@ fn main() -> std::io::Result<()> {
     Ok(())
 } // Fine scope: Chiusura dei file
 \end{lstlisting}
-La logica implementata in entrambi i listati,~\ref{c:file-io} e~\ref{rust:file-io}, è la stessa: dalla directory attuale vengono aperti due file, \texttt{read\_from} in lettura e \texttt{write\_to} in scrittura, successivamente viene letto l'intero contenuto di \texttt{read\_from} e viene scritto su \texttt{write\_to}, tramite blocchi di \texttt{2048} byte.
+La logica implementata in entrambi i Listati,~\ref{c:file-io} e~\ref{rust:file-io}, è la stessa: dalla directory attuale vengono aperti due file, \texttt{read\_from} in lettura e \texttt{write\_to} in scrittura, successivamente viene letto l'intero contenuto di \texttt{read\_from} e viene scritto su \texttt{write\_to}, tramite blocchi di \texttt{2048} byte.
 
-Nel listato~\ref{c:file-io}, i controlli sugli errori sono stati intenzionalmente omessi per evidenziare che in C tale comportamento è ammesso (l'unico controllo effettuato è su \texttt{read}, per determinare la fine della lettura).
+Nel Listato~\ref{c:file-io}, i controlli sugli errori sono stati intenzionalmente omessi per evidenziare che in C tale comportamento è ammesso (l'unico controllo effettuato è su \texttt{read}, per determinare la fine della lettura).
 
-Nel listato~\ref{rust:file-io}, invece, gli errori vengono gestiti tramite l'operatore \texttt{?}, il quale propaga l'errore alla funzione chiamante, garantendo simultaneamente sicurezza e maggiore leggibilità del codice.\hfill 
+Nel Listato~\ref{rust:file-io}, invece, gli errori vengono gestiti tramite l'operatore \texttt{?}, il quale propaga l'errore alla funzione chiamante, garantendo simultaneamente sicurezza e maggiore leggibilità del codice.\hfill 
 \vspace{8pt}\\
 \noindent A differenza di C, in cui la gestione degli errori viene lasciata alla discrezione del programmatore, Rust promuove un approccio più sicuro, tramite
 il tipo \texttt{Result} e l'operatore \texttt{?}. Questi meccanismi garantiscono la gestione dell'errore a livello di compilazione: il compilatore controlla che entrambi gli scenari (successo e fallimento) vengano
-gestiti esplicitamente oppure che l'errore venga propagato al chiamante tramite \texttt{?}, prevenendo scenari di \textit{undefined behaviour}.
+gestiti esplicitamente\footnote{In realtà, per \texttt{Result} è disponibile una funzione, \texttt{unwrap}, la quale tenta di restituire il contenuto di \texttt{Ok}, generando un \texttt{panic} se al suo posto era presente un \texttt{Err}. Questa funzione andrebbe utilizzata quando si è certi che il \texttt{Result} su cui la si invoca contenga un \texttt{Ok}. Va considerato che, il comportamento ideomatico di Rust, prevederebbe di controllare il contenuto, verificando che sia presente un \texttt{Ok} o un \texttt{Err}, prima di accedere al valore di \texttt{Result}. Alternativamente, \texttt{unwrap} potrebbe essere utilizzato come indicatore che un eventuale errore in quel punto sia irrecuperabile (seguendo il pensiero ideomatico di Rust, in cui \texttt{panic} è da usare solo per gli errori irrecuperabili). } oppure che l'errore venga propagato al chiamante tramite \texttt{?}, prevenendo scenari di \textit{undefined behaviour}.
 
 \subsubsection{Socket}
 Entrambi i linguaggi mettono a disposizione strumenti per lo sviluppo di applicazioni di rete, in particolare per 
@@ -309,14 +315,14 @@ Le principali operazioni sono:
 Queste astrazioni integrano la gestione degli errori avvalendosi del tipo \texttt{Result<T, E>}, obbligando
 il programmatore a gestire esplicitamente sia il caso di successo che quello di fallimento di un'operazione. \hfill
 \vspace{8pt} \\
-\noindent I listati~\ref{c:tcp-serv} e~\ref{rust:tcp-serv} mostrano la realizzazione di un server TCP in entrambi i linguaggi. 
+\noindent I Listati~\ref{c:tcp-serv} e~\ref{rust:tcp-serv} mostrano la realizzazione di un server TCP in entrambi i linguaggi. 
 La logica implementata è la stessa per entrambi: il server si mette in ascolto sulla porta \texttt{50000}, accetta una connessione in ingresso, legge fino a \texttt{1024} byte dal socket 
 e infine scrive, sempre su quest'ultimo, i dati ricevuti.
 
-Nel listato~\ref{c:tcp-serv} i controllo sugli errori sono stati omessi per evitare un'eccessiva complessità strutturale e facilitare la lettura, al fine di focalizzare l'attenzione sul
+Nel Listato~\ref{c:tcp-serv} i controllo sugli errori sono stati omessi per evitare un'eccessiva complessità strutturale e facilitare la lettura, al fine di focalizzare l'attenzione sul
 flusso logico di una connessione TCP.\ 
 
-Per lo stesso motivo, e per mantenere una somiglianza strutturale con l'esempio precedente, nel listato~\ref{rust:tcp-serv} gli errori non
+Per lo stesso motivo, e per mantenere una somiglianza strutturale con l'esempio precedente, nel Listato~\ref{rust:tcp-serv} gli errori non
 vengono gestiti esplicitamente, ma vengono propagati al chiamante tramite l'operatore \texttt{?}.\hfill 
 \vspace{8pt}\\
 \noindent Analogamente a quanto visto per la gestione dei file, Rust promuove un approccio più sicuro, tramite
@@ -441,20 +447,20 @@ int main(void) {
 \end{lstlisting}
 In Rust questo comportamento non si potrà mai realizzare, in quanto la deallocazione viene gestita implicitamente dal compilatore\footnote{Il compilatore inserisce chiamate alla funzione \textit{drop} in corrispondenza della fine di uno scope. Questo è realizzabile in quanto il \textit{Borrow Checker} controlla le relazioni di \textit{ownership} e \textit{borrowing} per determinare chi sia responsabile della deallocazione, ovvero su quali variabili invocare \textit{drop}.}. \hfill
 
-\noindent Nel Listato~\ref{rust:unfreed-memory} è riportato un programma in Rust che, per quanto possibile, replica il comportamento del listato~\ref{c:unfreed-memory}:
+\noindent Nel Listato~\ref{rust:unfreed-memory} è riportato un programma in Rust che, per quanto possibile, replica il comportamento del Listato~\ref{c:unfreed-memory}:
 \begin{lstlisting}[language=Rust, caption={Unfreed memory in Rust}, label={rust:unfreed-memory}]
 fn main() {
     let mem = Box::<u32>::new(0);
 }
 \end{lstlisting}
-Nel listato~\ref{c:unfreed-memory} viene allocata memoria nella heap sufficiente a contenere un intero, successivamente 
+Nel Listato~\ref{c:unfreed-memory} viene allocata memoria nella heap sufficiente a contenere un intero, successivamente 
 il programma termina senza liberarla\footnote{In realtà l'allocazione avviene nello spazio di memoria virtuale del processo; a termine dell'esecuzione, il sistema operativo recupera tutte le risorse allocate dal processo.}. 
 Il programma viene compilato ed eseguito correttamente, 
 nonostante la presenza di questo errore. 
 Tuttavia, tale memoria risulta inaccessibile per ulteriori allocazioni da parte del processo durante la sua esecuzione.\hfill
 \vspace{10pt}\\
-\noindent Il listato~\ref{rust:unfreed-memory} rappresenta il codice Rust più vicino possibile a 
-quello riportato nel listato~\ref{c:unfreed-memory}. La differenza principale è che la memoria viene deallocata automaticamente: 
+\noindent Il Listato~\ref{rust:unfreed-memory} rappresenta il codice Rust più vicino possibile a 
+quello riportato nel Listato~\ref{c:unfreed-memory}. La differenza principale è che la memoria viene deallocata automaticamente: 
 al termine dello scope della funzione \texttt{main}, la variabile \texttt{mem} viene eliminata e la relativa 
 memoria deallocata. 
 
@@ -480,7 +486,7 @@ int main(void) {
 }
 \end{lstlisting}
 \end{samepage}
-Nel Listato~\ref{rust:double-free} è riportato un programma in Rust che, per quanto possibile, tenta di replicare il comportamento del listato~\ref{c:double-free}.
+Nel Listato~\ref{rust:double-free} è riportato un programma in Rust che, per quanto possibile, tenta di replicare il comportamento del Listato~\ref{c:double-free}.
 \begin{lstlisting}[language=Rust, caption={Double free in Rust}, label={rust:double-free}]
 fn main() {
     let mem = Box::<u32>::new(0);
@@ -488,7 +494,7 @@ fn main() {
     std::mem::drop(mem);
 }
 \end{lstlisting}
-Nel listato~\ref{c:double-free} la memoria puntata da \texttt{ptr} viene deallocata due volte.
+Nel Listato~\ref{c:double-free} la memoria puntata da \texttt{ptr} viene deallocata due volte.
 In fase di esecuzione questo può portare a un crash del programma, come mostrato in Figura~\ref{c:double-free-exec}.
 
 Tuttavia, lo standard C non definisce un comportamento specifico da adottare in questo contesto, causando 
@@ -497,8 +503,8 @@ Tuttavia, lo standard C non definisce un comportamento specifico da adottare in 
 
 Per quanto riguarda Rust, è possibile considerare due scenari: 
 \begin{itemize}
-    \item Il listato~\ref{rust:unfreed-memory} rappresenta il comportamento idiomatico di Rust: la memoria viene deallocata automaticamente alla fine di uno \textit{scope}, senza necessità di interventi manuali;
-    \item Nel listato~\ref{rust:double-free}, invece, si tenta di deallocare esplicitamente la memoria con due chiamate consecutive a \texttt{std::mem::drop}\footnote{Questa funzione assume \textit{ownership} del valore fornito, causandone la deallocazione una volta raggiunta la fine della funzione.}. Tuttavia, la funzione \texttt{drop} prende possesso del valore, rendendo la reference originale, e di conseguenza la seconda chiamata, invalida. Il compilatore si accorge della violazione della terza regola di \textit{borrowing} (\textit{Tutte le reference devono essere valide}), impedendo la compilazione e generando l'errore riportato in Figura~\ref{rust:double-free-compile}.
+    \item Il Listato~\ref{rust:unfreed-memory} rappresenta il comportamento idiomatico di Rust: la memoria viene deallocata automaticamente alla fine di uno \textit{scope}, senza necessità di interventi manuali;
+    \item Nel Listato~\ref{rust:double-free}, invece, si tenta di deallocare esplicitamente la memoria con due chiamate consecutive a \texttt{std::mem::drop}\footnote{Questa funzione assume \textit{ownership} del valore fornito, causandone la deallocazione una volta raggiunta la fine della funzione.}. Tuttavia, la funzione \texttt{drop} prende possesso del valore, rendendo la reference originale, e di conseguenza la seconda chiamata, invalida. Il compilatore si accorge della violazione della terza regola di \textit{borrowing} (\textit{Tutte le reference devono essere valide}), impedendo la compilazione e generando l'errore riportato in Figura~\ref{rust:double-free-compile}.
 \end{itemize}
 \begin{figure}[htbp]
 \begin{center}
@@ -530,7 +536,7 @@ int main(void) {
     }
 }
 \end{lstlisting}
-Nel listato~\ref{c:dangling-pointer}, viene allocata memoria sufficiente per un intero e il suo indirizzo è memorizzato 
+Nel Listato~\ref{c:dangling-pointer}, viene allocata memoria sufficiente per un intero e il suo indirizzo è memorizzato 
 sia in \texttt{val} che in \texttt{ptr}. La memoria viene successivamente deallocata invocando la funzione \texttt{free} sul puntatore \texttt{val}.
 Tuttavia, il puntatore \texttt{ptr} non viene aggiornato, continuando a riferire alla stessa area di memoria, ormai non più valida.
 
@@ -548,7 +554,7 @@ fn main() {
     }
 }
 \end{lstlisting}
-Il listato~\ref{rust:dangling-pointer} tenta di replicare, per quanto possibile, il comportamento descritto nel listato~\ref{c:dangling-pointer}:
+Il Listato~\ref{rust:dangling-pointer} tenta di replicare, per quanto possibile, il comportamento descritto nel Listato~\ref{c:dangling-pointer}:
 alla variabile \texttt{\_ref} viene assegnato un riferimento a \texttt{val}, allocata dinamicamente in uno scope interno. All'uscita 
 da tale scope, \texttt{val} viene deallocato, lasciando \texttt{\_ref} con un riferimento non valido. 
 
@@ -569,7 +575,7 @@ di accesso, si possono avere conseguenze differenti:
     \item \textbf{Lettura}: può causare il recupero di dati non validi o incoerenti, eventualmente sovrascritti da allocazioni successive;
     \item \textbf{Scrittura}: può compromettere l'integrità della memoria, causando comportamenti indefiniti o crash del programma.
 \end{itemize}
-Nel Listato~\ref{c:access-after-free} è riportato un esempio C che, estendendo il listato~\ref{c:dangling-pointer}, genera un errore di \textit{access after free}:
+Nel Listato~\ref{c:access-after-free} è riportato un esempio C che, estendendo il Listato~\ref{c:dangling-pointer}, genera un errore di \textit{access after free}:
 \begin{lstlisting}[language=C, caption={Access after free in C}, label={c:access-after-free}]
 #include <stdlib.h>
 #include <stdio.h>
@@ -584,16 +590,16 @@ int main(void) {
     printf("%d\n", *ptr);
 }
 \end{lstlisting}
-Nel listato~\ref{c:access-after-free} si tenta di dereferenziare il puntatore \texttt{ptr} dopo che la memoria a cui faceva riferimento è stata deallocata.
+Nel Listato~\ref{c:access-after-free} si tenta di dereferenziare il puntatore \texttt{ptr} dopo che la memoria a cui faceva riferimento è stata deallocata.
 In questo caso, l'accesso avviene per effettuare un'operazione di lettura, che rappresenta una forma
  meno distruttiva rispetto a una scrittura, ma che resta comunque pericolosa:
 i dati letti potrebbero essere non validi o casuali, in quanto la memoria potrebbe essere stata sovrascritta da allocazioni successive.
  
 Questo comportamento rappresenta un esempio di \textit{undefined behaviour}, come illustrato
-dall'immagine~\ref{c:access-after-free-exec}. \hfill
+in Figura~\ref{c:access-after-free-exec}. \hfill
 \vspace{12pt}\\
-\noindent Nel Listato~\ref{rust:rust-access-after-free} è riportato un programma che mostra come Rust gestisce questa problematica.
-Per mantenere una somiglianza strutturale con la controparte C, il listato estende il precedente esempio riportato nel Listato~\ref{rust:dangling-pointer}.
+\noindent Nel Listato~\ref{rust:access-after-free} è riportato un programma che mostra come Rust gestisce questa problematica.
+Per mantenere una somiglianza strutturale con la controparte C, il Listato estende il precedente esempio riportato nel Listato~\ref{rust:dangling-pointer}.
 \begin{lstlisting}[language=Rust, caption={Tentativo di \textit{access after free} in Rust}, label={rust:access-after-free}]
 fn main() {
     let _ref: &u32;
@@ -604,7 +610,7 @@ fn main() {
     println!("{}", _ref);
 }
 \end{lstlisting}
-Il listato~\ref{rust:dangling-pointer} tenta di replicare il comportamento del listato~\ref{c:access-after-free}, cercando 
+Il Listato~\ref{rust:access-after-free} tenta di replicare il comportamento del Listato~\ref{c:access-after-free}, cercando 
 di accedere a una reference pendente per un'operazione di lettura.
 
 Tuttavia, in questo caso viene generato un errore di compilazione, come mostrato in Figura~\ref{rust:access-after-free-compile}.
@@ -612,7 +618,7 @@ Il \textit{Borrow Checker} rileva che \texttt{\_ref} viene utilizzata successiva
 delle regole di \textit{borrowing} e, di conseguenza, impedisce la compilazione.
 \begin{figure}[htbp]
 \begin{center}
-    \includegraphics[width=.8\textwidth]{access-after-free-c-exec}
+    \includegraphics[width=1.0\textwidth]{access-after-free-c-exec}
     \caption{\textit{Access after free} in C}\label{c:access-after-free-exec}
     \end{center}
 \end{figure}
@@ -648,9 +654,9 @@ int main(void) {
     return 0;
 }
 \end{lstlisting}
-Nel listato~\ref{c:buffer-overflow} viene allocata memoria suffiente per un vettore di tre interi, ma successivamente vengono
+Nel Listato~\ref{c:buffer-overflow} viene allocata memoria suffiente per un vettore di tre interi, ma successivamente vengono
 inizializzati quattro elementi, dall'indice \texttt{0} fino a \texttt{3}.
-In questo caso il programma termina senza errori, viene anche eseguita la stampa finale, come mostrato dall'immagine~\ref{c:buffer-overflow-exec}. 
+In questo caso il programma termina senza errori, viene anche eseguita la stampa finale, come mostrato in Figura~\ref{c:buffer-overflow-exec}. 
 
 Nonostante ciò, questo comportamento non può essere considerato una garanzia in quanto, generalmente, la conseguenza di un \textit{buffer overflow} è un \textit{undefined behaviour}: 
 non è possibile determinare a priori cosa contenga la memoria oltre
@@ -672,7 +678,7 @@ fn main() {
     println!("Terminata la memorizzazione!");
 }
 \end{lstlisting}
-Il listato~\ref{rust:buffer-overflow} tenta di replicare il comportamento del listato~\ref{c:buffer-overflow}, 
+Il Listato~\ref{rust:buffer-overflow} tenta di replicare il comportamento del Listato~\ref{c:buffer-overflow}, 
 allocando un vettore di tre interi e successivamente cercando di inizializzarne quattro. 
 In questo caso la compilazione va a buon fine, ma la stampa finale non avviene: il programma genera un \textit{panic} durante l'esecuzione. Questo avviene
 durante l'accesso all'indice \texttt{3}, come mostrato in Figura~\ref{rust:buffer-overflow-exec}.
@@ -680,13 +686,13 @@ durante l'accesso all'indice \texttt{3}, come mostrato in Figura~\ref{rust:buffe
 Questo comportamento è dovuto al fatto che il compilatore inserisce controlli di validità sugli indici, i quali vengono eseguiti a runtime.\footnote{Infatti, il compilatore non può sapere a tempo di compilazione quali saranno gli indici che verranno utilizzati per accedere a un vettore, quindi si limita a inserire controlli sulla loro validità prima degli accessi effettivi.}
 \begin{figure}[htbp]
 \begin{center}
-    \includegraphics[width=.8\textwidth]{c-buffer-overflow-exec}
+    \includegraphics[width=1\textwidth]{c-buffer-overflow-exec}
     \caption{\textit{Buffer overflow} in C}\label{c:buffer-overflow-exec}
     \end{center}
 \end{figure}
 \begin{figure}[htbp]
 \begin{center}
-    \includegraphics[width=.8\textwidth]{rust-buffer-overflow-exec}
+    \includegraphics[width=1\textwidth]{rust-buffer-overflow-exec}
     \caption{\textit{Buffer overflow} in Rust}\label{rust:buffer-overflow-exec}
     \end{center}
 \end{figure}
@@ -707,9 +713,9 @@ int main(void) {
     return 0;
 }
 \end{lstlisting}
-Nel listato~\ref{c:buffer-overread} viene allocata memoria per un vettore di tre interi, i quali vengono correttamente inizializzati e, successivamente,
+Nel Listato~\ref{c:buffer-overread} viene allocata memoria per un vettore di tre interi, i quali vengono correttamente inizializzati e, successivamente,
 si tenta di leggere dieci elementi dal vettore.
-In questo caso il programma termina senza errori, stampando effettivamente dieci elementi, come mostrato dall'immagine~\ref{c:buffer-overread-exec}. 
+In questo caso il programma termina senza errori, stampando effettivamente dieci elementi, come mostrato in Figura~\ref{c:buffer-overread-exec}. 
 
 Come quanto detto per l'errore di \textit{buffer overflow}, generalmente la conseguenza è un \textit{undefined behaviour}: 
 non è possibile determinare a priori cosa contenga la memoria (oltre
@@ -728,20 +734,20 @@ fn main() {
 }
 }
 \end{lstlisting}
-Il listato~\ref{rust:buffer-overread} tenta di replicare il comportamento del listato~\ref{c:buffer-overread}, 
+Il Listato~\ref{rust:buffer-overread} tenta di replicare il comportamento del Listato~\ref{c:buffer-overread}, 
 allocando un vettore di tre interi e successivamente cercando di leggerne dieci. 
 
 Anche in questo caso la compilazione termina correttamente ma, durante l'esecuzione, in particolare durante l'accesso al quarto elemento, viene generato
 un \textit{panic}. Questo comportamento può essere osservato in Figura~\ref{rust:buffer-overread-exec}.
 \begin{figure}[htbp]
 \begin{center}
-    \includegraphics[width=.8\textwidth]{c-buffer-overread-exec}
+    \includegraphics[width=1\textwidth]{c-buffer-overread-exec}
     \caption{\textit{Buffer overread} in C}\label{c:buffer-overread-exec}
     \end{center}
 \end{figure}
 \begin{figure}[htbp]
 \begin{center}
-    \includegraphics[width=.8\textwidth]{rust-buffer-overread-exec}
+    \includegraphics[width=1\textwidth]{rust-buffer-overread-exec}
     \caption{\textit{Buffer overread} in Rust}\label{rust:buffer-overread-exec}
     \end{center}
 \end{figure}
@@ -769,7 +775,7 @@ int main(void) {
     return 0;
 }
 \end{lstlisting}
-Nel listato~\ref{c:uninitialized-memory-access} viene allocata memoria sufficiente a contenere un intero e, senza inizializzarne il contenuto,
+Nel Listato~\ref{c:uninitialized-memory-access} viene allocata memoria sufficiente a contenere un intero e, senza inizializzarne il contenuto,
 viene tentato un accesso in lettura. 
 Il risultato è un comportamento indefinito: il valore letto potrebbe variare in base all'ambiente di esecuzione e tra esecuzioni, senza garanzia di coerenza.
 
@@ -781,7 +787,7 @@ Tuttavia, questa apparente stabilità non può essere considerata una garanzia, 
     \item Eventuali valori residui da allocazioni precedenti;
     \item La mappatura tra pagine virtuali e fisiche da parte del sistema operativo.
 \end{itemize}
-A conferma dell'inaffidabilità, si consideri l'esempio nel Listato~\ref{c:uninitialized-memory-access-2}, che estende il listato~\ref{c:uninitialized-memory-access}.
+A conferma dell'inaffidabilità, si consideri l'esempio nel Listato~\ref{c:uninitialized-memory-access-2}, che estende il Listato~\ref{c:uninitialized-memory-access}.
 \begin{lstlisting}[language=C, caption={Uninitialized memory access in C}, label={c:uninitialized-memory-access-2}]
 #include <stdlib.h>
 #include <stdio.h>
@@ -794,11 +800,11 @@ int main(void) {
     return 0;
 }
 \end{lstlisting}
-Il listato~\ref{c:uninitialized-memory-access-2} mostra come eseguire una \texttt{free} prima della \texttt{malloc} successiva può lasciare residui nella memoria. 
-Di conseguenza il valore letto, questa volta, è diverso da zero, come si può osservare dall'immagine~\ref{c:uninitialized-memory-access-exec-2}\footnote{Anche in questo caso, si tratta di un comportamento specifico del sistema e non garantito dallo standard.}.
+Il Listato~\ref{c:uninitialized-memory-access-2} mostra come eseguire una \texttt{free} prima della \texttt{malloc} successiva può lasciare residui nella memoria. 
+Di conseguenza il valore letto, questa volta, è diverso da zero, come si può osservare in Figura~\ref{c:uninitialized-memory-access-exec-2}\footnote{Anche in questo caso, si tratta di un comportamento specifico del sistema e non garantito dallo standard.}.
 \begin{figure}[htbp]
 \begin{center}
-    \includegraphics[width=.6\textwidth]{c-uninitialized-memory-access-exec}
+    \includegraphics[width=0.8\textwidth]{c-uninitialized-memory-access-exec}
     \caption{\textit{Uninitialized memory access} in C}\label{c:uninitialized-memory-access-exec}
     \end{center}
 \end{figure}
@@ -813,7 +819,7 @@ In Rust infatti, le principali primitive per l'allocazione dinamica richiedono s
 Di conseguenza, non è possibile sviluppare codice Rust che acceda a memoria non inizializzata senza ricorrere alla parola chiave \texttt{unsafe}\footnote{Rust consente l'accesso a memoria potenzialmente non inizializzata, ma soltanto all'interno di blocchi \textit{unsafe}. Un esempio è la funzione \texttt{std::mem::MaybeUninit}, ma meccanismi come questo sono riservati a casi particolari, in cui le garanzie di sicurezza devono essere gestite manualmente dal programmatore.}.
 \begin{figure}[htbp]
 \begin{center}
-    \includegraphics[width=.6\textwidth]{c-uninitialized-memory-access-exec-2}
+    \includegraphics[width=.8\textwidth]{c-uninitialized-memory-access-exec-2}
     \caption{\textit{Uninitialized memory access} in C con previa \texttt{free}}\label{c:uninitialized-memory-access-exec-2}
     \end{center}
 \end{figure}
@@ -838,7 +844,7 @@ Rust, d'altra parte, mira a garantire la sicurezza della memoria senza compromet
 \vspace{10pt}\\
 \noindent Per offrire un confronto concreto, vengono riportati i risultati tratti da \textit{The Computer Language Benchmarks Game}
 \footnote{Nel sito vengono raccolti i risultati dell'esecuzione di vari algoritmi sviluppati in diversi linguaggi di programmazione. Il sito potrebbe variare nel tempo e
-i risultati riportati nella trattazione potrebbero non essere più i migliori e peggiori (data di riferimento 2025-07-18)}~\cite{benchmarksgame}, un progetto che
+i risultati riportati nella trattazione potrebbero non essere più i migliori e peggiori (data di riferimento 2025-07-18).}~\cite{benchmarksgame}, un progetto che
 confronta le prestazioni di diversi linguaggi di programmazione nell'esecuzione di algoritmi comuni. Il confronto si basa su quattro parametri:
 \begin{itemize}
     \item \textbf{secs}: tempo di esecuzione totale (\textit{wall-clock time});
@@ -934,7 +940,7 @@ Questo overhead in fase di compilazione è però compensato dalla sicurezza dell
 \noindent Dal punto di vista della dimensione dei file eseguibili, Rust tende a generare file di dimensioni maggiori, principalmente per l'inclusione della libreria standard e dei simboli di debug\footnote{Tramite le opzioni del compilatore è possibile indicare l'ottimizzazione per lo spazio, che cerca di ridurre le dimensioni dell'eseguibile. Inoltre, in contesti di programmazione \textit{bare-metal}, è possibile escludere la libreria standard (\#![no\_std]), in quanto non è presente un sistema operativo sottostante.}. \hfill
 \vspace{5pt}\\
 \noindent Infine, per quanto riguarda l'utilizzo della memoria durante l'esecuzione, entrambi i linguaggi mostrano requisiti simili, con Rust che, tendenzialmente, può richiedere una quantità leggermente superiore di RAM, dovuta principalmente all'utilizzo di astrazioni.
-Infatti, nonostante quest'ultime siano definite \textit{zero-cost} in teoria, nella pratica, spesso, il compilatore non riesce a ottimizzarle pienamente e possono introdurre un minimo overhead.
+Infatti, nonostante quest'ultime siano definite \textit{zero-cost} in teoria, nella pratica, spesso, il compilatore non riesce a ottimizzarle pienamente e possono introdurre un minimo overhead\footnote{Per esempio, si consideri \texttt{Option<T>}, enumerazione che permette di esprimere la possibile assenza di un valore, \texttt{None} e \texttt{Some<T>}. In quanto Rust non permette che un riferimento sia nullo, tipi come \texttt{Box} o \texttt{String} non potranno mai valere 0. In questo scenario, \texttt{Option<Box>} e \texttt{Option<String>} occuperebbero lo stesso spazio di \texttt{Box} e \texttt{String} rispettivamente: il compilatore ottimizza l'astrazione, utilizzando il valore \texttt{0} per \texttt{None} e considerando ogni valore diverso da \texttt{0} come \texttt{Some}. Tuttavia, per tipi che possono essere nulli, come \texttt{u8}, \texttt{Option<u8>} richiede un byte aggiuntivo per rappresentare l'assenza di valore, non permettendo al compilatore di ottimizzare l'uso dell'astrazione.}.
 
 \subsection{Complessità del codice}
 Una critica comune nei confronti di Rust, specialmente da coloro che provengono da C, è la maggiore complessità e verbosità del linguaggio.
@@ -959,7 +965,7 @@ problemi quali \textit{access after free}. \hfill
 \noindent In C questo meccanismo non è presente, non esiste proprio il concetto di \textit{lifetime} come elemento del linguaggio. In questi
 casi è il programmatore che deve garantire che i puntatori siano validi, senza supporto da parte del linguaggio.
 
-Nei Listati~\ref{rust-lifetime-prevention} e~\ref{c:lifetime-prevention} verranno riportati due esempi che mostrano come le annotazioni di \textit{lifetime} possano prevenire \textit{access after free}.
+Nei Listati~\ref{rust:lifetime-prevention} e~\ref{c:lifetime-prevention} sono riportati due esempi che mostrano come le annotazioni di \textit{lifetime} possano prevenire \textit{access after free}.
 \begin{lstlisting}[language=Rust, caption={Prevenzione di \textit{access after free} tramite \textit{lifetime annotations}}, label={rust:lifetime-prevention}]
 fn biggest<'a>(a: &'a i32, b: &'a i32) -> &'a i32 {
     if *a > *b { a } else { b }
@@ -994,7 +1000,7 @@ int main(void) {
     free(smaller);
 }
 \end{lstlisting}
-Entrambi i listati,~\ref{rust:lifetime-prevention} e~\ref{c:lifetime-prevention}, implementano la stessa logica: definiscono una funzione \texttt{biggest} che
+Entrambi i Listati,~\ref{rust:lifetime-prevention} e~\ref{c:lifetime-prevention}, implementano la stessa logica: definiscono una funzione \texttt{biggest} che
 riceve in ingresso due riferimenti (o puntatori, nel caso di C) e restituisce quello che punta al valore maggiore.
 La funzione \texttt{main} alloca due interi, \texttt{smaller} e \texttt{bigger}, nella heap e passa un riferimento a ciascuno a 
 \texttt{biggest}.
@@ -1007,13 +1013,13 @@ Qua è possibile osservare la differenza tra i due linguaggi:
 \end{itemize}
 \begin{figure}[htbp]
     \begin{center}
-        \includegraphics[width=.9\textwidth]{c-aaf-lifetime}
+        \includegraphics[width=1.0\textwidth]{c-aaf-lifetime}
         \caption{\textit{Access after free} dovuto all'assenza di \textit{lifetime} in C}\label{c:aaf-lifetime}
     \end{center}
 \end{figure}
 \begin{figure}[htbp]
     \begin{center}
-        \includegraphics[width=.9\textwidth]{rust-aaf-lifetime}
+        \includegraphics[width=1.0\textwidth]{rust-aaf-lifetime}
         \caption{Tentativo di {access after free} in Rust}\label{rust:aaf-lifetime}
     \end{center}
 \end{figure}
@@ -1030,7 +1036,7 @@ Questo meccanismo, per quanto flessibile, richiede controlli rigorosi da parte d
     \item un puntatore \texttt{void*} non memorizza informazioni sulla dimensione del valore puntato, rendendo necessaria la conoscenza esplicita del tipo (solitamente memorizzandone la dimensione);
     \item le operazioni di accesso, sia in lettura che scrittura, devono essere effettuate tramite funzioni delicate come \texttt{memcpy}, in quanto non è possibile dereferenziare direttamente un puntatore \texttt{void*}.
 \end{itemize}
-Il listato~\ref{c:generics} riporta un'estratto da un'implementazione in C di un nodo di una lista generica. L'implementazione completa è disponibile sulla piattaforma Github\footnote{Disponibile nel repository, \href{https://github.com/whocaresleft/C-data-structures}{\texttt{C-data-structures}}, personale del candidato, seguendo il percorso: \texttt{src/linear/}. Alcuni commenti sono stati rimossi o spostati per ragioni di spazio.}~\cite{github-ds-repo}.
+Il Listato~\ref{c:generics} riporta un'estratto da un'implementazione in C di un nodo di una lista generica. L'implementazione completa è disponibile sulla piattaforma Github\footnote{Disponibile nel repository, \href{https://github.com/whocaresleft/C-data-structures}{\texttt{C-data-structures}}, personale del candidato, seguendo il percorso: \texttt{src/linear/}. Alcuni commenti sono stati rimossi o spostati per ragioni di spazio.}~\cite{github-ds-repo}.
 \begin{lstlisting}[language=C, float, caption={Programmazione generica in C}, label={c:generics}]
 typedef struct clinkedlist {
 	node* tail;
@@ -1077,9 +1083,9 @@ la corretta deallocazione della memoria. \hfill
 \noindent Rust adotta un approccio diverso, supportando la programmazione generica tramite le cosiddette \textit{zero-cost abstractions}\footnote{Si tratta di meccanismi e implementazioni astratti che non introducono overhead in fase di esecuzione rispetto al codice esplicito (concreto) equivalente.}.
 Durante la fase di compilazione, il compilatore applica un processo detto \textit{monomorfizzazione}, trasformando ogni utilizzo di una funzione o una struttura
 generica in una versione specifica per il tipo utilizzato.\hfill 
-%Rust consente inoltre di specificare vincoli sui tipi generici (\textit{trait bounds}), tramite \texttt{impl Trait} e \texttt{where}. Questi meccanismi sono equivalenti, rispettivamente, a \texttt{implements Interface} e \texttt{<T extends \ldots>} di Java. \hfill
+Rust consente inoltre di specificare vincoli sui tipi generici (\textit{\texttt{trait} bounds}), tramite \texttt{impl Trait} e \texttt{where}. Questi meccanismi sono equivalenti, rispettivamente, a \texttt{implements Interface} e \texttt{<T extends \ldots>} di Java. \hfill
 \vspace{8pt}\\
-\noindent Per ottenere un confronto sulla complessità del codice, viene riportato, nel listato~\ref{rust:generics}, l'implementazione in Rust del listato~\ref{c:generics}: 
+\noindent Per ottenere un confronto sulla complessità del codice, viene riportato, nel Listato~\ref{rust:generics}, l'implementazione in Rust del Listato~\ref{c:generics}: 
 il supporto alla programmazione generica di Rust permette di definire strutture dati e funzioni generiche con codice sicuro e conciso.
 \begin{lstlisting}[language=C, float, caption={Programmazione generica in Rust}, label={rust:generics}]
 struct Clinkedlist<T> {
@@ -1103,7 +1109,7 @@ impl<T> Node<T> {
 \end{lstlisting}
 
 L'implementazione risulta più semplice rispetto alla controparte C:\ non è necessario gestire manualmente la dimensione dei valori o gli accessi diretti alla memoria.
-A tal proposito, si consideri che \texttt{Node::<T>::new()} del listato~\ref{rust:generics} è l'equivalente di \texttt{node\_create} del listato~\ref{c:generics}.
+A tal proposito, si consideri che \texttt{Node::<T>::new()} del Listato~\ref{rust:generics} è l'equivalente di \texttt{node\_create} del Listato~\ref{c:generics}.
 
 \subsubsection{Gestione degli errori}
 I due linguaggi si distinguono per i meccanismi impiegati per la gestione degli errori.
@@ -1146,7 +1152,7 @@ int main(void) {
     return 0;
 }
 \end{lstlisting}
-Nel listato~\ref{c:macro}, viene definita la \textit{macro} \texttt{printline}, che stampa la stringa \texttt{x}, andando a capo successivamente.
+Nel Listato~\ref{c:macro}, viene definita la \textit{macro} \texttt{printline}, che stampa la stringa \texttt{x}, andando a capo successivamente.
 All'interno della funzione main viene invocata `\texttt{printline("Stampa di prova")}': questa sarà espansa in `\texttt{printf("\%s\textbackslash n", "Stampa di prova")}' dal pre-processore. 
 
 In quanto la sostituzione avviene durante la fase di pre-processamento,
@@ -1156,12 +1162,12 @@ per osservare il codice generato è necessario utilizzare il flag \texttt{-E} du
  come mostrato in Figura~\ref{c:macro-preprocess}. \hfill
 \begin{figure}[htbp]
     \begin{center}
-        \includegraphics[width=.6\textwidth]{c-macro-preprocess}
+        \includegraphics[width=0.9\textwidth]{c-macro-preprocess}
         \caption{Traduzione di una \textit{macro} in C}\label{c:macro-preprocess}
     \end{center}
 \end{figure}
 La natura semplice delle macro C comporta delle limitazioni e falle di sicurezza, molte delle quali sono riportate sulla documentazione GCC~\cite{GNU-online-docs}. 
-A dimostrazione di ciò, si consideri l'esempio riportato nel Listato~\ref{c:macro-2}, modifica del listato~\ref{c:macro}.
+A dimostrazione di ciò, si consideri l'esempio riportato nel Listato~\ref{c:macro-2}, modifica del Listato~\ref{c:macro}.
 \begin{lstlisting}[language=C, caption={Utilizzo scorretto di \textit{macro} in C}, label={c:macro-2}]
 #include <stdio.h>
 #define printline(x) printf("%s\n", x)
@@ -1171,11 +1177,11 @@ int main(void) {
     return 0;
 }
 \end{lstlisting}
-Nel listato~\ref{c:macro-2} si tenta di sfruttare la stessa macro, \texttt{printline}, per stampare il contenuto di un intero. 
+Nel Listato~\ref{c:macro-2} si tenta di sfruttare la stessa macro, \texttt{printline}, per stampare il contenuto di un intero. 
 È interessante osservare che, nonostante il mismatch dei tipi (\texttt{\%s} indica di interpretare il parametro come stringa), il compilatore
  genera soltanto un warning, producendo lo stesso un file eseguibile. 
 Tuttavia, tentando l'esecuzione si verifica un crash immediato dovuto a \textit{segmentation fault},
-come è osservabile dall'immagine~\ref{c:macro-exec}. \hfill
+come è osservabile in Figura~\ref{c:macro-exec}. \hfill
 \begin{figure}[htbp]
     \begin{center}
         \includegraphics[width=1\textwidth]{c-macro-exec}
@@ -1220,7 +1226,7 @@ fn main() {
     comp_eval!(true);
 }
 \end{lstlisting}
-Nel listato~\ref{rust:macro} è definita la \textit{macro} dichiarativa \texttt{comp\_eval} che, in base al pattern, espande un codice diverso:
+Nel Listato~\ref{rust:macro} è definita la \textit{macro} dichiarativa \texttt{comp\_eval} che, in base al pattern, espande un codice diverso:
 \begin{itemize}
     \item Se viene fornita una coppia di espressioni, \texttt{\$sx} e \texttt{\$dx}, separate dalla parola chiave \texttt{and}, la \textit{macro} espande una stampa della loro congiunzione logica;
     \item Se le espressioni sono separate dalla parola chiave \texttt{or}, espande una stampa della loro disgiunzione logica;
@@ -1235,18 +1241,18 @@ possibile con la semplice sostituzione testuale.
 Un'altra differenza rispetto alle \textit{macro} C riguarda la loro espansione: le \textit{macro} in Rust vengono espanse a livello di compilazione e in caso di mancata
 corrispondenza con qualsiasi \textit{pattern} previsto viene generato un errore di compilazione.
 
-Ad esempio, aggiungendo l'invocazione `\texttt{comp\_eval!("test")}' all'interno della funzione \texttt{main} nel listato~\ref{rust:macro}, si otterrà un errore
+Ad esempio, aggiungendo l'invocazione `\texttt{comp\_eval!("test")}' all'interno della funzione \texttt{main} nel Listato~\ref{rust:macro}, si otterrà un errore
 durante la compilazione in quanto il \texttt{pattern} fornito non corrisponde a nessuna delle regole definite nella macro\footnote{In questo esempio il pattern fornito è una singola stringa, quindi la regola adeguata sarebbe la terza, che accetta un'unica espressione. Tuttavia, l'operatore di negazione logica non può essere applicato a una stringa, di conseguenza il compilatore rifiuta il codice, generando un errore.}.
 Il messaggio di errore è osservabile in Figura~\ref{rust:incorrect-macro}.
 \begin{figure}[htbp]
     \begin{center}
-        \includegraphics[width=.8\textwidth]{rust-correct-macro}
+        \includegraphics[width=1\textwidth]{rust-correct-macro}
         \caption{Compilazione di una \textit{macro} in Rust}\label{rust:correct-macro}
     \end{center}
 \end{figure}
 \begin{figure}[htbp]
     \begin{center}
-        \includegraphics[width=.8\textwidth]{rust-incorrect-macro}
+        \includegraphics[width=1\textwidth]{rust-incorrect-macro}
         \caption{Errore durante la compilazione di una \textit{macro} in Rust}\label{rust:incorrect-macro}
     \end{center}
 \end{figure}

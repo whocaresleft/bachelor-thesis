@@ -1,20 +1,19 @@
 % !TEX root = ../Thesis.tex
 
 \chapter{Introduzione}\label{cap:01}
-\section{Contestualizzazione}
 Negli ultimi anni il linguaggio di programmazione \textit{Rust} ha suscitato 
 un crescente interesse, attirando l'attenzione di sviluppatori e aziende.
 Una delle motivazioni principali risiede nel suo approccio alla 
 gestione della memoria dinamica, da sempre un tema cruciale nello sviluppo di sistemi di basso livello.
 
-Storicamente, si sono affermati due approcci alla gestione della memoria: 
+Storicamente, si sono affermati due approcci alla gestione della memoria dinamica: 
 quello \textit{manuale}, adottato dai primi linguaggi di programmazione come 
 l'assembly e, successivamente, dal C
-e quello \textit{automatico}, introdotto nel 1959 da Lisp, il primo linguaggio 
-a integrare la \textit{Garbage Collection} (\textit{GC}). \hfill 
-\vspace{8pt}\\
-\noindent L'approccio manuale rende il programmatore interamente responsabile 
-della gestire della memoria, esponendo a una vasta gamma di errori dovuti al 
+e quello \textit{automatico}, basato su \textit{Garbage Collection} (\textit{GC}), introdotto nel 1959 
+da Lisp e oggigiorno impiegato da Java, Python, C\# o anche GO, insieme a tanti altri linguaggi considerati di alto livello. 
+
+L'approccio manuale rende il programmatore interamente responsabile 
+della gestione della memoria, introducendo potenzialmente una vasta gamma di errori dovuti al 
 fattore umano; la \textit{GC}, invece, solleva il programmatore 
 da tale incarico, ma introduce un overhead non trascurabile e riduce 
 la trasparenza e il controllo sulla memoria.
@@ -34,12 +33,25 @@ strumenti effettivamente offerti.
 La presente ricerca prende in esame la crescente popolarità di Rust nell'ambito
  della programmazione di basso livello, in particolare nello sviluppo di sistemi operativi.
 
- Il linguaggio ha una premessa chiara: prevenire interi classi di problemi legati
+ Nel corso della trattazione verranno richiamati concetti tipici della programmazione di sistema, principalmente
+in ambiente Unix, come l'uso dei puntatori, le librerie \texttt{POSIX} e, in generale, elementi del linguaggio C, accompagnati da listati di codice.
+Per chiarire alcuni degli aspetti peculiari di Rust, specialmente quelli di alto livello o con un livello di astrazione maggiore, saranno
+ proposte anche delle analogie con il linguaggio Java.
+
+Nonostante una conoscenza di base sia di C che di Java possa agevolare la comprensione dei contenuti, non è strettamente necessaria:
+i concetti più tecnici saranno accompagnati da spiegazioni accessibili, ove possibile\footnote{Rust offre diversi meccanismi riconducibili alla 
+programmazione orientata agli oggetti (\textit{Object-Oriented Programming}, \textit{OOP}). Ho scelto di utilizzare delle analogie in Java per spiegare
+questi strumenti in quanto Java è un linguaggio frequentemente utilizzato per introdurre la \textit{OOP} nei corsi universitari. 
+Anche se non è indispensabile, ritengo che una familiarità, anche di base, con Java, può risultare utile: alcuni elementi caratteristici della \textit{OOP} risultano difficili 
+da spiegare, nella loro interezza, senza le basi del paradigma.}.\\
+
+
+\noindent Rust ha una premessa chiara: prevenire interi classi di problemi legati
  alla gestione della memoria a livello di compilazione, 
 fornendo allo stesso tempo prestazioni, in termini di velocità d'esecuzione, 
-paragonabili a C e C++. \hfill
-\vspace{8pt}\\
-\noindent Vi sono, per tale motivo, varie iniziative che mirano a inserire il linguaggio
+paragonabili a C e C++. 
+
+Vi sono, per tale motivo, varie iniziative che mirano a inserire il linguaggio
  come valida opzione nello sviluppo di sistemi operativi,
 ma la sua integrazione solleva questioni fondamentali, sia da un punto di vista
  di tradizione (in quanto storicamente C è un pilastro nello sviluppo di sistemi
@@ -47,20 +59,39 @@ ma la sua integrazione solleva questioni fondamentali, sia da un punto di vista
  per imparare un nuovo linguaggio e per mantenere
   contemporaneamente due flussi di sviluppo paralleli (C e Rust).
 
+\section{Motivazioni}
+Ho scelto di approfondire il linguaggio Rust per un interesse personale nelle tematiche della 
+programmazione di basso livello, specialmente in C, e della \textit{Cybersecurity}.
+
+Durante il mio percorso di studi, ho avuto modo di confrontarmi più volte con il linguaggio C, sviluppando 
+un certo interesse sia verso il linguaggio che verso le sue comuni applicazioni, come \textit{sistemi embedded} e, in generale, software che 
+interagisce con il sistema operativo. 
+
+Questo mi ha portato, più volte, a incorrere in comuni errori di memoria (principalmente \textit{Segmentation Fault} e \textit{Buffer Overflow});
+inoltre, sempre durante il percorso di studi, ho avuto modo di acquisire conoscenze, sia teoriche che pratiche, di Cybersecurity (da un punto di vista offensivo, ovvero da \textit{Penetration tester} o \textit{White Hacker})
+e ho avuto modo di osservare come la maggior parte degli errori o delle falle nelle applicazioni possano essere sfruttati per diversi scopi, anche malevoli (per eseguire \textit{login bypass} o per accedere ad aree di memoria contenenti dati sensibili).
+
+Questo mi ha portato a riflettere su come fosse possibile rendere codice scritto in C sicuro, con lo scopo di prevenire 
+errori che potessero essere sfruttati. Tuttavia, proprio in questo contesto, sono arrivato a 
+conoscenza di Rust, il quale ha attirato la mia attenzione, sia per la sua premessa del tutto innovativa, che per la sua crescente adozione, specialmente nella 
+programmazione di basso livello.
+
+
+
 \section{Obiettivi} 
 L'obiettivo principale di questa tesi è offrire una panoramica sul linguaggio 
 di programmazione Rust, esponendo quelle che sono le motivazioni 
 dietro il suo sviluppo e la sua popolarità; successivamente, verrà analizzato 
-l'approccio alternativo di gestione della memoria implementato dal linguaggio. \hfill
-\vspace{7pt}\\
-\noindent Un altro obiettivo è quello di stabilire se, nella teoria, Rust rappresenti una valida 
+l'approccio alternativo di gestione della memoria implementato dal linguaggio.
+
+Un altro obiettivo è quello di stabilire se, nella teoria, Rust rappresenti una valida 
 opzione per la programmazione di basso livello. Verranno innanzitutto stabiliti i requisiti 
 fondamentali di un linguaggio per lo sviluppo di sistemi operativi; successivamente Rust verrà 
 confrontato con C, standard \textit{de facto} per la programmazione di basso 
 livello, sulla base di gestione delle risorse, della memoria e degli errori, complessità della sintassi e 
-prestazioni, fornendo a tale scopo anche esempi di codice. \hfill
-\vspace{7pt}\\
-\noindent Come aspetto finale, verranno proposti progetti 
+prestazioni, fornendo a tale scopo anche esempi di codice.
+
+Come aspetto finale, verranno proposti progetti 
 concreti che mostrano come la popolarità del linguaggio non sia solo 
 teorica, ma rappresenti uno strumento pratico e in grado di portare risultati concreti.
 
@@ -74,7 +105,7 @@ la seconda presenterà esempi concreti di applicazioni reali.
 La prima parte è suddivisa in tre capitoli: Capitolo~\ref{cap:02}, Capitolo~\ref{cap:03} e Capitolo~\ref{cap:04}; mentre la seconda parte è composta interamente dal Capitolo~\ref{cap:05}. \hfill
 \vspace{7pt}\\
 \noindent Nel Capitolo~\ref{cap:02}, verrà fornita una panoramica sul linguaggio di programmazione Rust, con particolare attenzione sulle motivazioni 
-che ne hanno determinato lo svilupop e alla base della sua crescente popolarità negli ultimi anni. \hfill
+che ne hanno determinato lo sviluppo e che sono alla base della sua crescente popolarità negli ultimi anni. \hfill
 \vspace{7pt}\\
 \noindent Nel Capitolo~\ref{cap:03}, verrà esaminato il modello di gestione della memoria implementato da Rust,
 con un'analisi approfondita dei meccanismi alla base; verranno inoltre forniti listati di codice che mostrano esempi del loro funzionamento. \hfill
@@ -96,4 +127,4 @@ Il confronto con C evidenzia vantaggi in termini di sicurezza e mantenibilità, 
 e una curva di apprendimento più ripida e lenta. \hfill 
 \vspace{8pt}\\
 \noindent Nella seconda parte (Capitolo~\ref{cap:05}), verranno presi in considerazioni progetti concreti (\textit{Rust for Linux}, \textit{Redox OS}, il kernel di Windows 11 e \texttt{sudo-rs}), 
-evidenziando che Rust è già impiegato in contesti di sistemi operativi e che la sua adozione procede, seppur gradualmente, in maniera significativa. 
+evidenziando che Rust è già impiegato in contesti di sistemi operativi e che la sua adozione procede, seppur gradualmente, in maniera significativa.
