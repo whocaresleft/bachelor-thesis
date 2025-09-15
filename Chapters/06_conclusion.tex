@@ -1,6 +1,6 @@
 % !TEX root = ../Thesis.tex
 
-\chapter{Conclusione}\label{cap:06}
+\chapter{Conclusioni}\label{cap:06}
 Il Capitolo~\ref{cap:02}, ha ripercorso le origini del linguaggio e le motivazioni alla base del suo sviluppo, 
 evidenziando come si sia evoluto in breve tempo, da progetto personale e sperimentale, in uno strumento adottato da un ampio numero di sviluppatori e aziende. \hfill
 \vspace{10pt}\\
@@ -34,11 +34,31 @@ padroneggiati, definendo una curva di apprendimento molto più ripida rispetto a
 che Rust si limita a prevenire gli errori di gestione della memoria, ma non quelli logici: la correttezza di un algoritmo o di un'implementazione 
 rimane ancora pienamente responsabilità del programmatore. \hfill 
 \vspace{10pt}\\
+\noindent La mia introduzione al linguaggio non è stata troppo ardua inizialmente. La mia esperienza con il C e la programmazione di sistema in Unix,
+seppure da livello universitario, mi ha permesso, in una fase iniziale, di comprendere facilmente i concetti di \textit{Ownership} e \textit{Borrowing}.
+A questo si può aggiungere la conoscenza del linguaggio Java, il quale mi aiutato a comprendere \textit{Generics} e gli altri aspetti riconducibili alla \textit{OOP} (come i \texttt{trait} e l'utilizzo di \texttt{self} per simulare oggetti e metodi).
+Sotto questo aspetto, a primo impatto il linguaggio può sembrare molto astratto e di alto livello, per questo è stato sorprendente osservare, sia 
+di prima persona che da estratti online, velocità di esecuzione così elevate; il merito risiede nel compilatore, \texttt{rustc}, e nella 
+sua \textit{ottimizzazione nell'ottimizzare il codice}, elemento che, oltre a giustificare, spiega il motivo dietro ai tempi
+di compilazione relativamente lunghi.
+
+Le prime frustrazioni non hanno, però, tardato ad arrivare: è stato sufficiente tentare di sviluppare una semplice lista concatenata per scontrarmi 
+con il \textit{Borrow Checker} e con le \textit{lifetime}, probabilmente il concetto più complicato del \textit{modello di ownership}. 
+Anche programmando in C si ha a che fare questo concetto, ma \textit{fuori} dal linguaggio: lo sviluppatore deve tenere traccia dei 
+puntatori, delle allocazioni e delle deallocazioni, per garantire un funzionamento corretto dell'applicazione. In Rust, invece, il concetto è esplicito:
+si deve spiegare, e giustificare, al \textit{Borrow Checker} le validità temporali. Tuttavia, quest'ultimo analizza perfino casi limite, i quali potrebbero sfuggire al programmatore,
+rifiutando codice che a prima vista sembra corretto, ma non copre ogni singolo \textit{edge-case}.
+
+Per la mia esperienza, considero il linguaggio affascinante, ma in un \textit{suo mondo}: la maggior parte della complessità deriva proprio dal 
+\textit{Borrow Checker} e dalle \textit{lifetime}, i quali, seppur non immediatamente intuitivi, permettono di evitare potenziali problemi. Proprio per la complessità, il linguaggio rappresenta
+un \textit{trade-off}, in cui si scambia tempo (per lo sviluppo e l'acquisizione del linguaggio), per un codice sicuro. Non è sensato 
+utilizzare Rust solo per il gusto di farlo (eccezione potrebbe essere fatta per scopi didattici), in quanto si rischia di nullificarne i benefici.\hfill 
+\vspace{10pt}\\
 \noindent È quindi opportuno, o comunque consigliato, evitare un impiego indiscriminato del linguaggio. Da un lato, utilizzare Rust in contesti 
 dove i suoi vantaggi non si traducono in benefici concreti 
 (ad esempio, \  un'applicazione che non lavora con una quantità significativa di memoria dinamica)
 rischia di introdurre soltanto complessità;
-dall'altro, utilizzare Rust come se fosse un'altro linguaggio, aggirando o utilizzando in maniera scorretta i costrutti 
+dall'altro, utilizzare Rust come se fosse un altro linguaggio, aggirando o utilizzando in maniera scorretta i costrutti 
 disponibili (per esempio scrivendo ampie porzioni di codice \textit{unsafe}) vanifica gran parte dei 
 principi alla base del linguaggio stesso. \hfill 
 \vspace{10pt}\\
